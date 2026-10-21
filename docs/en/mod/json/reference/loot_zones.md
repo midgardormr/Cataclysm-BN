@@ -20,8 +20,6 @@ creating a zone, independently of its displayed type:
 }
 ```
 
-When omitted or empty, the translated type name is used, with any leading
-Unicode private-use glyphs and their following spaces removed. This supports
-mods that prefix their type names with custom icon fonts. Existing zone names
-are preserved. Zone-specific suggestions, such as a construction blueprint or
-a custom loot filter, retain precedence.
+When omitted or empty, the translated type name is used, including any icon
+prefix. Existing zone names are preserved. Zone-specific suggestions, such as
+a construction blueprint or a custom loot filter, retain precedence.

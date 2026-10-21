@@ -35,7 +35,6 @@
 #include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_position.h"
 #include "world.h"
-#include "zone_ui.h"
 
 #include <algorithm>
 #include <array>
@@ -118,7 +117,7 @@ std::string zone_type::desc() const
 
 auto zone_type::default_name() const -> std::string
 {
-    return default_name_.empty() ? zone_name_without_icon( name() ) : _( default_name_ );
+    return default_name_.empty() ? name() : _( default_name_ );
 }
 
 auto zone_type::color() const -> nc_color { return color_; }

@@ -9536,7 +9536,7 @@ void game::zones_manager()
 
     u.view_offset = tripoint_rel_ms::zero();
 
-    const auto zone_ui_height = 13;
+    const auto zone_ui_height = 14;
     const auto shortcuts_height = 5;
     const auto zone_options_height = zone_ui_height - shortcuts_height - 2;
 
@@ -9629,8 +9629,9 @@ void game::zones_manager()
         if( zone_cnt > 0 ) {
             const auto &zone = zones[active_index].get();
             const auto content_width = getmaxx( w_zones_options ) - 2;
-            auto y = fold_and_print_from( w_zones_options, point( 1, 0 ), content_width, 0,
-                                          c_light_gray, "%s", mgr.get_name_from_type( zone.get_type() ) );
+            mvwprintz( w_zones_options, point( 1, 0 ), c_light_gray, _( "Zone type:" ) );
+            auto y = 1 + fold_and_print_from( w_zones_options, point( 1, 1 ), content_width, 0,
+                                              c_light_gray, "%s", mgr.get_name_from_type( zone.get_type() ) );
             if( zone.has_options() ) {
                 for( const auto &desc : zone.get_options().get_descriptions() ) {
                     if( y >= getmaxy( w_zones_options ) ) {

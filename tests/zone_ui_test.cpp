@@ -6,17 +6,6 @@
 #include <sstream>
 #include <string>
 
-TEST_CASE("zone_suggested_name_without_private_use_icon", "[zone][zone_ui]") {
-    CHECK(zone_name_without_icon("\ue200\ue201 Ingredients") == "Ingredients");
-    CHECK(zone_name_without_icon("\ue300 Одежда") == "Одежда");
-    CHECK(zone_name_without_icon("\U000f0001 Books") == "Books");
-    CHECK(zone_name_without_icon("Tools") == "Tools");
-    CHECK(zone_name_without_icon("  My pantry") == "  My pantry");
-    CHECK(zone_name_without_icon("Pantry \ue200\ue201") == "Pantry \ue200\ue201");
-    CHECK(zone_name_without_icon("").empty());
-    CHECK(zone_name_without_icon("\ue200\ue201 ") == "\ue200\ue201 ");
-}
-
 TEST_CASE("zone_type_separate_default_name", "[zone][zone_ui][json]") {
     auto stream = std::istringstream{
         R"({"id":"zone_ui_test","name":"\ue200\ue201 Type","default_name":"My pantry"})"};
@@ -31,7 +20,7 @@ TEST_CASE("zone_type_default_name_fallback", "[zone][zone_ui]") {
     const auto plain = zone_type{"Unsorted", ""};
     CHECK(plain.default_name() == plain.name());
     const auto decorated = zone_type{"\ue200\ue201 Ингредиенты", ""};
-    CHECK(decorated.default_name() == "Ингредиенты");
+    CHECK(decorated.default_name() == decorated.name());
     CHECK(decorated.name() == "\ue200\ue201 Ингредиенты");
 }
 
