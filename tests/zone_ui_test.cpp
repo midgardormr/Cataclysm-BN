@@ -1,6 +1,7 @@
 #include "catch/catch.hpp"
 #include "clzones.h"
 #include "json.h"
+#include "output.h"
 #include "zone_ui.h"
 
 #include <sstream>
@@ -35,4 +36,14 @@ TEST_CASE("zone_row_keeps_room_for_long_name_and_location", "[zone][zone_ui]") {
     CHECK(distant.location_x + utf8_width("12345 СЗ") == 43);
     const auto wide = make_zone_row_layout(63, "0 Ц");
     CHECK(wide.name_width > nearby.name_width);
+}
+
+TEST_CASE("whole_zone_icons_occupy_two_cells", "[zone][zone_ui]") {
+    CHECK(utf8_width("\ue240") == 2);
+    CHECK(utf8_width("\ue251") == 2);
+    CHECK(utf8_width("\ue200\ue201") == 2);
+    CHECK(utf8_width("\ue23f") == 1);
+    CHECK(utf8_width("\ue252") == 1);
+    CHECK(utf8_width("\ue240 Еда") == 6);
+    CHECK(trim_by_length("\ue240 Еда", 6) == "\ue240 Еда");
 }
