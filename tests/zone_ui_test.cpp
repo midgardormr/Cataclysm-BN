@@ -47,3 +47,14 @@ TEST_CASE("whole_zone_icons_occupy_two_cells", "[zone][zone_ui]") {
     CHECK(utf8_width("\ue240 Еда") == 6);
     CHECK(trim_by_length("\ue240 Еда", 6) == "\ue240 Еда");
 }
+
+TEST_CASE("custom_zone_details_show_only_filter_text", "[zone][zone_ui][json]") {
+    auto stream = std::istringstream{R"({"mark":"c:еда,m:железо,q:забивания"})"};
+    auto input = JsonIn{stream};
+    auto options = loot_options{};
+    options.deserialize(input.get_object());
+    const auto descriptions = options.get_descriptions();
+    REQUIRE(descriptions.size() == 1);
+    CHECK(descriptions.front().first.empty());
+    CHECK(descriptions.front().second == "c:еда,m:железо,q:забивания");
+}

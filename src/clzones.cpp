@@ -594,7 +594,7 @@ std::string loot_options::get_zone_name_suggestion() const
 std::vector<std::pair<std::string, std::string>> loot_options::get_descriptions() const
 {
     std::vector<std::pair<std::string, std::string>> options;
-    options.emplace_back( _( "Loot: Custom: " ),
+    options.emplace_back( "",
                           !mark.empty() ? mark : _( "No filter" ) );
 
     return options;

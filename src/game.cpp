@@ -9633,6 +9633,7 @@ void game::zones_manager()
             auto y = 1 + fold_and_print_from( w_zones_options, point( 1, 1 ), content_width, 0,
                                               c_light_gray, "%s", mgr.get_name_from_type( zone.get_type() ) );
             if( zone.has_options() ) {
+                ++y;
                 for( const auto &desc : zone.get_options().get_descriptions() ) {
                     if( y >= getmaxy( w_zones_options ) ) {
                         break;
