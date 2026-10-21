@@ -982,3 +982,11 @@ add_custom_target(uninstall
 if (USE_UNITY_BUILD)
     set_property(GLOBAL PROPERTY UNITY_BUILD ON)
 endif ()
+
+if (TARGET zone_ui_translations)
+    foreach (ZONE_UI_TARGET cataclysm-bn-tiles cata_test-tiles)
+        if (TARGET ${ZONE_UI_TARGET})
+            add_dependencies(${ZONE_UI_TARGET} zone_ui_translations)
+        endif ()
+    endforeach ()
+endif ()

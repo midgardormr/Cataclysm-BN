@@ -9448,21 +9448,26 @@ bool game::is_zone_submap_grid_overlay_enabled() const
 namespace
 {
 
-auto zones_manager_shortcuts( const catacurses::window &w_info, const bool overlay_enabled,
-                              const bool submap_grid_enabled ) -> void
+auto zones_manager_shortcuts( const catacurses::window &w_info, const bool /*overlay_enabled*/,
+                              const bool /*submap_grid_enabled*/ ) -> void
 {
     werase( w_info );
     const auto key = []( const std::string & text ) { return shortcut_text( c_light_green, text ); };
-    const auto lines = std::array<std::string, 5> {
-        key( _( "<A>dd" ) ) + "  " + key( _( "<R>emove" ) ) + "  " +
-        key( _( "<E>nable" ) ) + "  " + key( _( "<D>isable" ) ),
-        key( _( "<+-> Move up/down" ) ) + "  " + key( _( "<Enter>-Edit" ) ),
-        key( _( "<S>how all / hide distant" ) ) + "  " + key( _( "<M>ap" ) ),
-        shortcut_text( overlay_enabled ? c_light_green : c_white, _( "<O> - Toggle Overlays" ) ),
-        shortcut_text( submap_grid_enabled ? c_light_green : c_white, _( "<G> - Submap grid" ) )
-    };
+    const auto lines = std::array<std::array<std::string, 2>, 5> {{
+            { key( _( "<A>dd" ) ), key( _( "<R>emove" ) ) },
+            { key( _( "<E>nable" ) ), key( _( "<D>isable" ) ) },
+            { key( _( "<+-> Move up/down" ) ), key( _( "<Enter>-Edit" ) ) },
+            { key( _( "<S>how all / hide distant" ) ), key( _( "<M>ap" ) ) },
+            { key( _( "<O> - Toggle Overlays" ) ), key( _( "<G> - Submap grid" ) ) }
+        }};
+    auto column_width = 0;
+    for( const auto &line : lines ) {
+        column_width = std::max( column_width, utf8_width( line[0], true ) );
+    }
     for( const auto y : std::views::iota( 0, static_cast<int>( lines.size() ) ) ) {
-        center_print( w_info, y, c_white, lines[y] );
+        auto color = c_white;
+        print_colored_text( w_info, point( 1, y ), color, c_white, lines[y][0] );
+        print_colored_text( w_info, point( column_width + 3, y ), color, c_white, lines[y][1] );
     }
     wnoutrefresh( w_info );
 }

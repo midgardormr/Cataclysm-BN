@@ -1,0 +1,9 @@
+ZoneIcons: modified subset of Material Design Icons by Pictogrammers.
+Source: https://github.com/Templarian/MaterialDesign-Webfont
+Changes: 18 glyphs selected, remapped to U+E100–U+E111, fitted to 16×16 cells, renamed ZoneIcons.
+
+Версия 2.0: каждая иконка разделена на два символа U+E200–U+E223, каждый шириной 8 px. Пара занимает две ячейки. Нужны одновременно новый шрифт и новые zones.json.
+
+Version 2.1: icon artwork uniformly reduced from 14 to 12 px; two-cell advance unchanged.
+
+Version 3.0 prototype: halves combined with outline union into one glyph per icon; U+E240–U+E251; 1024-unit advance, 12px artwork unchanged. Requires patched game width calculation.

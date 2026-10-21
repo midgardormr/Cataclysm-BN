@@ -107,7 +107,12 @@ void zone_manager::reset_manager()
 
 std::string zone_type::name() const
 {
-    return _( name_ );
+    return name_.translated();
+}
+
+auto zone_type::display_name() const -> std::string
+{
+    return icon_.empty() ? name() : icon_ + " " + name();
 }
 
 std::string zone_type::desc() const
@@ -117,7 +122,7 @@ std::string zone_type::desc() const
 
 auto zone_type::default_name() const -> std::string
 {
-    return default_name_.empty() ? name() : _( default_name_ );
+    return default_name_.empty() ? display_name() : _( default_name_ );
 }
 
 auto zone_type::color() const -> nc_color { return color_; }
@@ -179,6 +184,7 @@ void zone_type::reset_zones()
 void zone_type::load( const JsonObject &jo, const std::string & )
 {
     mandatory( jo, was_loaded, "name", name_ );
+    optional( jo, was_loaded, "icon", icon_, "" );
     optional( jo, was_loaded, "default_name", default_name_, "" );
     mandatory( jo, was_loaded, "id", id );
     optional( jo, was_loaded, "description", desc_, "" );
@@ -758,7 +764,7 @@ std::optional<zone_type_id> zone_manager::query_type() const
                std::back_inserter<std::vector<std::pair<zone_type_id, zone_type>>>( types_vec ) );
     std::sort( types_vec.begin(), types_vec.end(),
     []( const std::pair<zone_type_id, zone_type> &lhs, const std::pair<zone_type_id, zone_type> &rhs ) {
-        return localized_compare( lhs.second.name(), rhs.second.name() );
+        return localized_compare( lhs.second.display_name(), rhs.second.display_name() );
     } );
 
     uilist as_m;
@@ -769,7 +775,7 @@ std::optional<zone_type_id> zone_manager::query_type() const
     for( const auto &pair : types_vec ) {
         const auto &type = pair.second;
 
-        as_m.addentry_desc( i++, true, MENU_AUTOASSIGN, type.name(), type.desc() );
+        as_m.addentry_desc( i++, true, MENU_AUTOASSIGN, type.display_name(), type.desc() );
     }
 
     as_m.query();
@@ -870,7 +876,7 @@ std::string zone_manager::get_name_from_type( const zone_type_id &type ) const
 {
     const auto &iter = types.find( type );
     if( iter != types.end() ) {
-        return iter->second.name();
+        return iter->second.display_name();
     }
 
     return "Unknown Type";

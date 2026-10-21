@@ -2,6 +2,8 @@
 #include "clzones.h"
 #include "json.h"
 #include "output.h"
+#include "language.h"
+#include "options_helpers.h"
 #include "zone_ui.h"
 
 #include <sstream>
@@ -58,4 +60,32 @@ TEST_CASE("custom_zone_details_show_only_filter_text", "[zone][zone_ui][json]") 
     REQUIRE(descriptions.size() == 1);
     CHECK(descriptions.front().first.empty());
     CHECK(descriptions.front().second == "c:еда,m:железо,q:забивания");
+}
+
+TEST_CASE("zone_icon_is_separate_from_translated_name", "[zone][zone_ui][json]") {
+    auto stream = std::istringstream{R"({"id":"zone_ui_icon","name":{"str":"Food","ctxt":"zone UI test"},"icon":"\ue241"})"};
+    auto input = JsonIn{stream};
+    auto type = zone_type{};
+    type.load(input.get_object(), "zone_ui_test");
+    CHECK(type.name() == "Food");
+    CHECK(type.display_name() == "\ue241 Food");
+    CHECK(type.default_name() == type.display_name());
+    CHECK(utf8_width(type.display_name()) == 7);
+}
+
+TEST_CASE("built_in_zone_names_follow_game_language", "[zone][zone_ui][i18n]") {
+    const auto food = zone_type_id("LOOT_FOOD");
+    {
+        const auto language = override_option{"USE_LANG", "ru_RU"};
+        set_language();
+        CHECK(food->name() == "Еда");
+        CHECK(food->display_name() == "\ue241 Еда");
+    }
+    {
+        const auto language = override_option{"USE_LANG", "en_US"};
+        set_language();
+        CHECK(food->name() == "Food");
+        CHECK(food->display_name() == "\ue241 Food");
+    }
+    set_language();
 }

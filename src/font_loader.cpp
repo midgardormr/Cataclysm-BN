@@ -31,6 +31,9 @@ void font_loader::load_throws( const std::string &path )
             config.read( "overmap_typeface", overmap_typeface );
         }
 
+        if( !std::ranges::contains( typeface, "data/font/ZoneIconsWhole.ttf" ) ) {
+            typeface.insert( typeface.begin(), "data/font/ZoneIconsWhole.ttf" );
+        }
         ensure_unifont_loaded( typeface );
         ensure_unifont_loaded( map_typeface );
         ensure_unifont_loaded( overmap_typeface );

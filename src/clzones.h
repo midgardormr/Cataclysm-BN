@@ -18,6 +18,7 @@
 #include "point.h"
 #include "string_id.h"
 #include "type_id.h"
+#include "translations.h"
 
 class JsonIn;
 class JsonObject;
@@ -35,7 +36,8 @@ const std::string type_dim_hash_str = "__DIM__";
 class zone_type
 {
     private:
-        std::string name_;
+        translation name_;
+        std::string icon_;
         std::string default_name_;
         std::string desc_;
         nc_color color_;
@@ -46,10 +48,12 @@ class zone_type
 
         zone_type() = default;
         explicit zone_type( const std::string &name, const std::string &desc,
-                            nc_color color = c_yellow ) : name_( name ),
+                            nc_color color = c_yellow ) : name_( to_translation( name ) ),
             desc_( desc ), color_( color ) {}
 
         std::string name() const;
+        /// Localized type label with its optional icon.
+        auto display_name() const -> std::string;
         /// Suggested name for a new zone, independent of its displayed type.
         auto default_name() const -> std::string;
         std::string desc() const;

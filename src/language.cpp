@@ -490,6 +490,7 @@ static void add_mod_catalogue_if_exists( std::vector<trans_catalogue> &list,
 
 static void add_base_catalogue( std::vector<trans_catalogue> &list, const std::string &lang_id )
 {
+    add_cat_if_exists( list, lang_id, PATH_INFO::base_path() + "lang/zone_ui/", ".mo" );
     // TODO: split source code strings from data strings
     //       and load data translations from separate file(s)
     add_cat_if_exists( list, lang_id,

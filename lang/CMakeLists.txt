@@ -2,6 +2,19 @@ include(GNUInstallDirs)
 
 message(STATUS "Process LANGUAGES variable --\n")
 
+# Zone UI data translations are shipped separately from the downloaded catalogue.
+find_program(ZONE_UI_MSGFMT NAMES msgfmt)
+if (ZONE_UI_MSGFMT)
+    add_custom_command(
+        OUTPUT ${CMAKE_SOURCE_DIR}/lang/zone_ui/ru.mo
+        COMMAND ${ZONE_UI_MSGFMT} -c -o ${CMAKE_SOURCE_DIR}/lang/zone_ui/ru.mo
+                ${CMAKE_SOURCE_DIR}/lang/zone_ui/ru.po
+        DEPENDS ${CMAKE_SOURCE_DIR}/lang/zone_ui/ru.po
+        VERBATIM)
+    add_custom_target(zone_ui_translations ALL DEPENDS ${CMAKE_SOURCE_DIR}/lang/zone_ui/ru.mo)
+    install(FILES ${CMAKE_SOURCE_DIR}/lang/zone_ui/ru.mo DESTINATION lang/zone_ui)
+endif ()
+
 if (LANGUAGES STREQUAL none)
     message(STATUS "Not compiling any languages.\n")
     return()

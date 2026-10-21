@@ -1,0 +1,287 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: ru\n"
+"Project-Id-Version: Zone UI\n"
+"PO-Revision-Date: 2026-10-21 04:00+0300\n"
+"Last-Translator: Zone UI contributors\n"
+"Language-Team: Russian\n"
+"MIME-Version: 1.0\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgctxt "zone name LOOT_UNSORTED"
+msgid "Unsorted"
+msgstr "Несортированное"
+
+msgctxt "zone name LOOT_FOOD"
+msgid "Food"
+msgstr "Еда"
+
+msgctxt "zone name LOOT_PFOOD"
+msgid "Perishable food"
+msgstr "Портящаяся еда"
+
+msgctxt "zone name LOOT_DRINK"
+msgid "Drink"
+msgstr "Напитки"
+
+msgctxt "zone name LOOT_PDRINK"
+msgid "Perishable drinks"
+msgstr "Портящиеся напитки"
+
+msgctxt "zone name LOOT_CONTAINERS"
+msgid "Containers"
+msgstr "Контейнеры"
+
+msgctxt "zone name LOOT_GUNS"
+msgid "Guns"
+msgstr "Огнестрельное оружие"
+
+msgctxt "zone name LOOT_MAGAZINES"
+msgid "Magazines"
+msgstr "Магазины"
+
+msgctxt "zone name LOOT_AMMO"
+msgid "Ammo"
+msgstr "Боеприпасы"
+
+msgctxt "zone name LOOT_WEAPONS"
+msgid "Weapons"
+msgstr "Оружие ближнего боя"
+
+msgctxt "zone name LOOT_TOOLS"
+msgid "Other Tools"
+msgstr "Другие инструменты"
+
+msgctxt "zone name LOOT_CLOTHING"
+msgid "Clothing"
+msgstr "Одежда"
+
+msgctxt "zone name LOOT_DRUGS"
+msgid "Drugs"
+msgstr "Препараты"
+
+msgctxt "zone name LOOT_BATTERY"
+msgid "Battery"
+msgstr "Источники энергии"
+
+msgctxt "zone name LOOT_BOOKS"
+msgid "Books"
+msgstr "Книги"
+
+msgctxt "zone name LOOT_SPELLBOOKS"
+msgid "Spellbooks"
+msgstr "Заклинания"
+
+msgctxt "zone name LOOT_MODS"
+msgid "Mods"
+msgstr "Модификации"
+
+msgctxt "zone name LOOT_MUTAGENS"
+msgid "Mutagens"
+msgstr "Мутагены"
+
+msgctxt "zone name LOOT_BIONICS"
+msgid "Bionics"
+msgstr "Бионика"
+
+msgctxt "zone name LOOT_VEHICLE_PARTS"
+msgid "V.Parts"
+msgstr "Детали транспорта"
+
+msgctxt "zone name LOOT_OTHER"
+msgid "Other"
+msgstr "Прочее"
+
+msgctxt "zone name LOOT_FUEL"
+msgid "Fuel"
+msgstr "Топливо"
+
+msgctxt "zone name LOOT_SEEDS"
+msgid "Seeds"
+msgstr "Семена"
+
+msgctxt "zone name LOOT_CHEMICAL"
+msgid "Chemical"
+msgstr "Химикаты"
+
+msgctxt "zone name LOOT_SPARE_PARTS"
+msgid "S.Parts"
+msgstr "Запчасти"
+
+msgctxt "zone name LOOT_ARTIFACTS"
+msgid "Artifacts"
+msgstr "Артефакты"
+
+msgctxt "zone name LOOT_CORPSE"
+msgid "Corpses"
+msgstr "Трупы"
+
+msgctxt "zone name LOOT_MAP"
+msgid "Maps"
+msgstr "Карты"
+
+msgctxt "zone name LOOT_WOOD"
+msgid "Wood"
+msgstr "Дерево"
+
+msgctxt "zone name LOOT_CUSTOM"
+msgid "Custom filter"
+msgstr "Настраиваемый фильтр"
+
+msgctxt "zone name LOOT_IGNORE"
+msgid "Ignore"
+msgstr "Игнорировать"
+
+msgctxt "zone name LOOT_IGNORE_FAVORITES"
+msgid "Ignore Favorites"
+msgstr "Игнорировать избранное"
+
+msgctxt "zone name LOOT_ENTRY_TOOLS"
+msgid "Entry Tools"
+msgstr "Инструменты взлома"
+
+msgctxt "zone name LOOT_WORKSHOP_TOOLS"
+msgid "Workshop Tools"
+msgstr "Инструменты мастерской"
+
+msgctxt "zone name LOOT_COOKING_TOOLS"
+msgid "Cooking Tools"
+msgstr "Кухонные инструменты"
+
+msgctxt "zone name LOOT_CHEMISTRY_TOOLS"
+msgid "Chemistry Tools"
+msgstr "Химические инструменты"
+
+msgctxt "zone name LOOT_FARM_TOOLS"
+msgid "Farm Tools"
+msgstr "Сельскохозяйственные инструменты"
+
+msgctxt "zone name LOOT_DEPLOYABLES"
+msgid "Deployables"
+msgstr "Складные устройства"
+
+msgctxt "zone name LOOT_ELECTRONICS"
+msgid "Electronics"
+msgstr "Электроника"
+
+msgctxt "zone name LOOT_COOKING_INGREDIENTS"
+msgid "Cooking Ingredients"
+msgstr "Кулинарные ингредиенты"
+
+msgctxt "zone name LOOT_SCRAP_METAL"
+msgid "Scrap Metal"
+msgstr "Металлолом"
+
+msgctxt "zone name LOOT_SCRAP_ELECTRONICS"
+msgid "Scrap Electronics"
+msgstr "Электронные компоненты"
+
+msgctxt "zone name LOOT_SCRAP_FABRIC"
+msgid "Scrap Fabric"
+msgstr "Ткани"
+
+msgctxt "zone name LOOT_SCRAP_WOOD"
+msgid "Scrap Wood"
+msgstr "Древесный лом"
+
+msgctxt "zone name LOOT_SCRAP_PLASTIC"
+msgid "Scrap Plastic"
+msgstr "Пластиковый лом"
+
+msgctxt "zone name LOOT_SCRAP_CERAMICS"
+msgid "Scrap Ceramics"
+msgstr "Керамический лом"
+
+msgctxt "zone name LOOT_SCRAP_GLASS"
+msgid "Scrap Glass"
+msgstr "Стеклянный лом"
+
+msgctxt "zone name LOOT_VALUABLES"
+msgid "Valuables"
+msgstr "Ценности"
+
+msgctxt "zone name LOOT_ROCKS"
+msgid "Rocks"
+msgstr "Камни"
+
+msgctxt "zone name LOOT_SOIL"
+msgid "Soil"
+msgstr "Грунт"
+
+msgctxt "zone name NO_AUTO_PICKUP"
+msgid "No Auto Pickup"
+msgstr "Без автоподбора"
+
+msgctxt "zone name NO_NPC_PICKUP"
+msgid "No NPC Pickup"
+msgstr "НПС без подбора"
+
+msgctxt "zone name NPC_RETREAT"
+msgid "NPC Retreat"
+msgstr "НПС отступление"
+
+msgctxt "zone name NPC_NO_INVESTIGATE"
+msgid "NPC Ignore Sounds"
+msgstr "НПС игнорирование шума"
+
+msgctxt "zone name NPC_INVESTIGATE_ONLY"
+msgid "NPC Investigation Area"
+msgstr "НПС зона расследования"
+
+msgctxt "zone name LOOT_DUMP"
+msgid "Dump"
+msgstr "Свалка"
+
+msgctxt "zone name SOURCE_FIREWOOD"
+msgid "Source Firewood"
+msgstr "Источник дров"
+
+msgctxt "zone name CONSTRUCTION_BLUEPRINT"
+msgid "Construction Blueprint"
+msgstr "Строительство проект"
+
+msgctxt "zone name CONSTRUCTION_IGNORE"
+msgid "Construction Ignore"
+msgstr "Строительство игнорировать"
+
+msgctxt "zone name FARM_PLOT"
+msgid "Farm Plot"
+msgstr "Фермерство участок"
+
+msgctxt "zone name CHOP_TREES"
+msgid "Chop Trees"
+msgstr "Вырубка деревьев"
+
+msgctxt "zone name FISHING_SPOT"
+msgid "Fishing Spot"
+msgstr "Область рыбалки"
+
+msgctxt "zone name MINING"
+msgid "Mine Terrain"
+msgstr "Область раскопок"
+
+msgctxt "zone name VEHICLE_DECONSTRUCT"
+msgid "Vehicle Deconstruct Zone"
+msgstr "Область разборки транспорта"
+
+msgctxt "zone name VEHICLE_REPAIR"
+msgid "Vehicle Repair Zone"
+msgstr "Область ремонта транспорта"
+
+msgctxt "zone name VEHICLE_PATROL"
+msgid "Vehicle Patrol Zone"
+msgstr "Транспортная патрульная область"
+
+msgctxt "zone name AUTO_EAT"
+msgid "Auto Eat"
+msgstr "Автоматически есть"
+
+msgctxt "zone name AUTO_DRINK"
+msgid "Auto Drink"
+msgstr "Автоматически пить"
+
+
+msgctxt "zone name LOOT_TOOLS"
+msgid "Tools"
+msgstr "Инструменты"

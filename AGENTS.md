@@ -157,3 +157,9 @@ rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
 - When generated or externally pulled files are removed from tracking, verify all CI and release consumers still receive required files or directories.
 
 - `trim_by_length` is declared in `output.h`, not `catacharset.h`; include it explicitly in tests that exercise display truncation.
+
+- `print_colored_text` takes a mutable `nc_color` reference for its current color; pass a local variable, not a palette constant.
+
+- Never run concurrent builds against the same build directory; finish or stop the existing build before starting another.
+
+- Language-switch tests must use IDs from `data/raw/languages.json` (English is `en_US`, not `en`).
