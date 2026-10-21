@@ -64,6 +64,8 @@ auto print_button( const catacurses::window &w, const button_options &opts ) -> 
 
 - **SHOULD NOT** modify existing headers with >10 usages. Create new header with pure functions.
 - **MUST** use modern C++23 features.
+- On the supported Apple Clang 16 toolchain, `std::views::enumerate` is unavailable; use a clear indexed loop or `views::iota` when an index is needed.
+- For locale-independent Unicode processing, use `utf8_to_utf32` / `utf32_to_utf8`; `utf8_to_wstr` depends on the process locale on POSIX.
 - **MUST** preserve unused parameter names as comments instead of deleting them, e.g. `bool /*is_avatar*/` not `bool`; applies to functions and lambdas.
 - **MUST** keep Lua function parameters typed with EmmyLua/LuaLS annotations, including existing and local helper functions: `---@param` and table `---@class`/`---@field` shapes where parameters are tables. Do not require or add `---@return` solely for annotation enforcement when the return type is inferable. Before touching Lua, inspect the file's annotation style and preserve complete function typing.
 - **MUST** fix missing Lua binding type declarations at the binding/doc-generation source; do not hard-code generated binding classes in `data/raw/generate_types.lua` as a shortcut.

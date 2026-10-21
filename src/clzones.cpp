@@ -35,6 +35,7 @@
 #include "vehicle/vehicle_part.h"
 #include "vehicle/vpart_position.h"
 #include "world.h"
+#include "zone_ui.h"
 
 #include <algorithm>
 #include <array>
@@ -115,6 +116,11 @@ std::string zone_type::desc() const
     return _( desc_ );
 }
 
+auto zone_type::default_name() const -> std::string
+{
+    return default_name_.empty() ? zone_name_without_icon( name() ) : _( default_name_ );
+}
+
 auto zone_type::color() const -> nc_color { return color_; }
 
 namespace
@@ -174,6 +180,7 @@ void zone_type::reset_zones()
 void zone_type::load( const JsonObject &jo, const std::string & )
 {
     mandatory( jo, was_loaded, "name", name_ );
+    optional( jo, was_loaded, "default_name", default_name_, "" );
     mandatory( jo, was_loaded, "id", id );
     optional( jo, was_loaded, "description", desc_, "" );
     optional( jo, was_loaded, "color", color_, c_white );

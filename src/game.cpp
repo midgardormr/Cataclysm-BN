@@ -185,6 +185,7 @@
 #include "world.h"
 #include "world_type.h"
 #include "worldfactory.h"
+#include "zone_ui.h"
 
 #include <algorithm>
 #include <bitset>
@@ -9444,43 +9445,45 @@ bool game::is_zone_submap_grid_overlay_enabled() const
     return zone_submap_grid_overlay;
 }
 
-static void zones_manager_shortcuts( const catacurses::window &w_info, const bool overlay_enabled,
-                                     const bool submap_grid_enabled )
+namespace
+{
+
+auto zones_manager_shortcuts( const catacurses::window &w_info, const bool overlay_enabled,
+                              const bool submap_grid_enabled ) -> void
 {
     werase( w_info );
-
-    int tmpx = 1;
-    tmpx += shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<A>dd" ) ) + 2;
-    tmpx += shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<R>emove" ) ) + 2;
-    tmpx += shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<E>nable" ) ) + 2;
-    shortcut_print( w_info, point( tmpx, 0 ), c_white, c_light_green, _( "<D>isable" ) );
-
-    tmpx = 1;
-    tmpx += shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green,
-                            _( "<+-> Move up/down" ) ) + 2;
-    shortcut_print( w_info, point( tmpx, 1 ), c_white, c_light_green, _( "<Enter>-Edit" ) );
-
-    tmpx = 1;
-    tmpx += shortcut_print( w_info, point( tmpx, 2 ), c_white, c_light_green,
-                            _( "<S>how all / hide distant" ) ) + 2;
-    shortcut_print( w_info, point( tmpx, 2 ), c_white, c_light_green, _( "<M>ap" ) );
-
-    tmpx = 1;
-    const nc_color overlay_color = overlay_enabled ? c_light_green : c_white;
-    shortcut_print( w_info, point( tmpx, 3 ), c_white, overlay_color,
-                    _( "<O> - Toggle Overlays" ) );
-    tmpx += shortcut_print( w_info, point( tmpx, 3 ), c_white, c_light_green, "  " ) + 1;
-    const nc_color submap_color = submap_grid_enabled ? c_light_green : c_white;
-    shortcut_print( w_info, point( tmpx, 3 ), c_white, submap_color,
-                    _( "<G> - Submap grid" ) );
-
+    const auto key = []( const std::string & text ) { return shortcut_text( c_light_green, text ); };
+    const auto lines = std::array<std::string, 5> {
+        key( _( "<A>dd" ) ) + "  " + key( _( "<R>emove" ) ) + "  " +
+        key( _( "<E>nable" ) ) + "  " + key( _( "<D>isable" ) ),
+        key( _( "<+-> Move up/down" ) ) + "  " + key( _( "<Enter>-Edit" ) ),
+        key( _( "<S>how all / hide distant" ) ) + "  " + key( _( "<M>ap" ) ),
+        shortcut_text( overlay_enabled ? c_light_green : c_white, _( "<O> - Toggle Overlays" ) ),
+        shortcut_text( submap_grid_enabled ? c_light_green : c_white, _( "<G> - Submap grid" ) )
+    };
+    for( const auto y : std::views::iota( 0, static_cast<int>( lines.size() ) ) ) {
+        center_print( w_info, y, c_white, lines[y] );
+    }
     wnoutrefresh( w_info );
 }
 
-static void zones_manager_draw_borders( const catacurses::window &w_border,
-                                        const catacurses::window &w_info_border,
-                                        const int iInfoHeight, const int width )
+} // namespace
+
+namespace
 {
+
+struct zone_border_options {
+    int info_height;
+    int width;
+    int shortcuts_height;
+};
+
+auto zones_manager_draw_borders( const catacurses::window &w_border,
+                                 const catacurses::window &w_info_border,
+                                 const zone_border_options &options ) -> void
+{
+    const auto iInfoHeight = options.info_height;
+    const auto width = options.width;
     for( int i = 1; i < TERMX; ++i ) {
         if( i < width ) {
             mvwputch( w_border, point( i, 0 ), c_light_gray, LINE_OXOX ); // -
@@ -9516,8 +9519,16 @@ static void zones_manager_draw_borders( const catacurses::window &w_border,
 
     mvwputch( w_info_border, point( 0, iInfoHeight - 1 ), c_light_gray, LINE_XXOO );
     mvwputch( w_info_border, point( width - 1, iInfoHeight - 1 ), c_light_gray, LINE_XOOX );
+    const auto separator_y = iInfoHeight - options.shortcuts_height - 2;
+    for( const auto x : std::views::iota( 1, width - 1 ) ) {
+        mvwputch( w_info_border, point( x, separator_y ), c_light_gray, LINE_OXOX );
+    }
+    mvwputch( w_info_border, point( 0, separator_y ), c_light_gray, LINE_XXXO );
+    mvwputch( w_info_border, point( width - 1, separator_y ), c_light_gray, LINE_XOXX );
     wnoutrefresh( w_info_border );
 }
+
+} // namespace
 
 void game::zones_manager()
 {
@@ -9525,8 +9536,9 @@ void game::zones_manager()
 
     u.view_offset = tripoint_rel_ms::zero();
 
-    const int zone_ui_height = 12;
-    const int zone_options_height = 7;
+    const auto zone_ui_height = 13;
+    const auto shortcuts_height = 5;
+    const auto zone_options_height = zone_ui_height - shortcuts_height - 2;
 
     const int width = 45;
 
@@ -9555,12 +9567,12 @@ void game::zones_manager()
                                       point( offsetX + 1, 1 ) );
         w_zones_border = catacurses::newwin( w_zone_height, width,
                                              point( offsetX, 0 ) );
-        w_zones_info = catacurses::newwin( zone_ui_height - zone_options_height - 1,
-                                           width - 2, point( offsetX + 1, w_zone_height ) );
+        w_zones_info = catacurses::newwin( shortcuts_height, width - 2,
+                                           point( offsetX + 1, TERMY - shortcuts_height - 1 ) );
         w_zones_info_border = catacurses::newwin( zone_ui_height, width,
-                              point( offsetX, w_zone_height ) );
-        w_zones_options = catacurses::newwin( zone_options_height - 1, width - 2,
-                                              point( offsetX + 1, TERMY - zone_options_height ) );
+            point( offsetX, w_zone_height ) );
+        w_zones_options = catacurses::newwin( zone_options_height, width - 2,
+                                              point( offsetX + 1, w_zone_height ) );
 
         ui.position( point( offsetX, 0 ), point( width, TERMY ) );
     } );
@@ -9616,18 +9628,16 @@ void game::zones_manager()
 
         if( zone_cnt > 0 ) {
             const auto &zone = zones[active_index].get();
-
+            const auto content_width = getmaxx( w_zones_options ) - 2;
+            auto y = fold_and_print_from( w_zones_options, point( 1, 0 ), content_width, 0,
+                                          c_light_gray, "%s", mgr.get_name_from_type( zone.get_type() ) );
             if( zone.has_options() ) {
-                const auto &descriptions = zone.get_options().get_descriptions();
-
-                // NOLINTNEXTLINE(cata-use-named-point-constants)
-                mvwprintz( w_zones_options, point( 1, 0 ), c_white, _( "Options" ) );
-
-                int y = 1;
-                for( const auto &desc : descriptions ) {
-                    mvwprintz( w_zones_options, point( 3, y ), c_white, desc.first );
-                    mvwprintz( w_zones_options, point( 20, y ), c_white, desc.second );
-                    y++;
+                for( const auto &desc : zone.get_options().get_descriptions() ) {
+                    if( y >= getmaxy( w_zones_options ) ) {
+                        break;
+                    }
+                    y += fold_and_print_from( w_zones_options, point( 1, y ), content_width, 0,
+                                              c_white, "%s%s", desc.first, desc.second );
                 }
             }
         }
@@ -9720,7 +9730,8 @@ void game::zones_manager()
         if( !show ) {
             return;
         }
-        zones_manager_draw_borders( w_zones_border, w_zones_info_border, zone_ui_height, width );
+        zones_manager_draw_borders( w_zones_border, w_zones_info_border,
+        { .info_height = zone_ui_height, .width = width, .shortcuts_height = shortcuts_height } );
         zones_manager_shortcuts( w_zones_info, g->show_zone_overlay,
                                  g->debug_submap_grid_overlay || zone_submap_grid_overlay );
 
@@ -9753,33 +9764,24 @@ void game::zones_manager()
                         colorLine = ( zone.get_enabled() ) ? c_light_green : c_green;
                     }
 
-                    //Draw Zone name
-                    mvwprintz( w_zones, point( 3, iNum - start_index ), colorLine,
-                               trim_by_length( zone.get_name(), 15 ) );
-
-                    //Draw Type name
-                    mvwprintz( w_zones, point( 20, iNum - start_index ), colorLine,
-                               mgr.get_name_from_type( zone.get_type() ) );
-
-                    auto center = zone.get_center_point();
-
-                    //Draw direction + distance
-                    mvwprintz( w_zones, point( 32, iNum - start_index ), colorLine, "%*d %s",
-                               5, static_cast<int>( trig_dist( player_absolute_pos, center ) ),
-                               direction_name_short( direction_from( player_absolute_pos,
-                                                     center ) ) );
-
-                    //Draw Vehicle Indicator
-                    mvwprintz( w_zones, point( 41, iNum - start_index ), colorLine,
+                    const auto center = zone.get_center_point();
+                    const auto location = string_format( "%d %s",
+                                                         static_cast<int>( trig_dist( player_absolute_pos, center ) ),
+                                                         direction_name_short( direction_from( player_absolute_pos, center ) ) );
+                    const auto layout = make_zone_row_layout( getmaxx( w_zones ), location );
+                    const auto row = iNum - start_index;
+                    mvwprintz( w_zones, point( 3, row ), colorLine, "%s",
+                               trim_by_length( zone.get_name(), layout.name_width ) );
+                    mvwprintz( w_zones, point( layout.location_x, row ), colorLine, "%s", location );
+                    mvwprintz( w_zones, point( layout.vehicle_x, row ), colorLine, "%s",
                                zone.get_is_vehicle() ? "*" : "" );
                 }
                 iNum++;
             }
 
-            // Display zone options
-            zones_manager_options();
         }
 
+        zones_manager_options();
         wnoutrefresh( w_zones );
     } );
 
@@ -9801,7 +9803,7 @@ void game::zones_manager()
 
                 auto default_name = options->get_zone_name_suggestion();
                 if( default_name.empty() ) {
-                    default_name = mgr.get_name_from_type( id );
+                    default_name = id->default_name();
                 }
                 const auto maybe_name = mgr.query_name( default_name );
                 if( !maybe_name.has_value() ) {

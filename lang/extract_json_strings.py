@@ -1130,6 +1130,9 @@ def extract_json(state, item):
     if "name_suffix" in item:
         writestr(state, item["name_suffix"])
         wrote = True
+    if object_type == "LOOT_ZONE" and "default_name" in item:
+        writestr(state, item["default_name"], comment="Suggested name for a newly created zone")
+        wrote = True
     if "name_unique" in item:
         writestr(state, item["name_unique"])
         wrote = True

@@ -36,6 +36,7 @@ class zone_type
 {
     private:
         std::string name_;
+        std::string default_name_;
         std::string desc_;
         nc_color color_;
     public:
@@ -49,6 +50,8 @@ class zone_type
             desc_( desc ), color_( color ) {}
 
         std::string name() const;
+        /// Suggested name for a new zone, independent of its displayed type.
+        auto default_name() const -> std::string;
         std::string desc() const;
         auto color() const -> nc_color;
 
