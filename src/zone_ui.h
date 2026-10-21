@@ -30,10 +30,10 @@ struct zone_row_layout {
     int vehicle_x;
 };
 
-/// Keep distance/direction right-aligned and reserve the last cell for a vehicle marker.
+/// Keep distance/direction against the right edge; place a vehicle marker before them.
 inline auto make_zone_row_layout( const int width, const std::string &location ) -> zone_row_layout
 {
-    const auto location_x = std::max( 4, width - utf8_width( location ) - 2 );
-    return { .name_width = std::max( 1, location_x - 4 ),
-             .location_x = location_x, .vehicle_x = width - 1 };
+    const auto location_x = std::max( 4, width - utf8_width( location ) );
+    return { .name_width = std::max( 1, location_x - 5 ),
+             .location_x = location_x, .vehicle_x = location_x - 1 };
 }

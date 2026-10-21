@@ -37,13 +37,13 @@ TEST_CASE("zone_type_default_name_fallback", "[zone][zone_ui]") {
 
 TEST_CASE("zone_row_keeps_room_for_long_name_and_location", "[zone][zone_ui]") {
     const auto nearby = make_zone_row_layout(43, "0 Ц");
-    CHECK(nearby.name_width == 34);
-    CHECK(nearby.location_x == 38);
-    CHECK(nearby.vehicle_x == 42);
+    CHECK(nearby.name_width == 35);
+    CHECK(nearby.location_x == 40);
+    CHECK(nearby.vehicle_x == 39);
     const auto distant = make_zone_row_layout(43, "12345 СЗ");
-    CHECK(distant.name_width == 29);
-    CHECK(distant.location_x == 33);
-    CHECK(distant.location_x + utf8_width("12345 СЗ") < distant.vehicle_x);
+    CHECK(distant.name_width == 30);
+    CHECK(distant.location_x == 35);
+    CHECK(distant.location_x + utf8_width("12345 СЗ") == 43);
     const auto wide = make_zone_row_layout(63, "0 Ц");
     CHECK(wide.name_width > nearby.name_width);
 }
