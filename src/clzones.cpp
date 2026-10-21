@@ -585,10 +585,7 @@ bool loot_options::query()
 
 std::string loot_options::get_zone_name_suggestion() const
 {
-    if( !mark.empty() ) {
-        return string_format( _( "Loot: Custom: %s" ), mark );
-    }
-    return _( "Loot: Custom: No Filter" );
+    return {};
 }
 
 std::vector<std::pair<std::string, std::string>> loot_options::get_descriptions() const

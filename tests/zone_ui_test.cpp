@@ -53,6 +53,7 @@ TEST_CASE("custom_zone_details_show_only_filter_text", "[zone][zone_ui][json]") 
     auto input = JsonIn{stream};
     auto options = loot_options{};
     options.deserialize(input.get_object());
+    CHECK(options.get_zone_name_suggestion().empty());
     const auto descriptions = options.get_descriptions();
     REQUIRE(descriptions.size() == 1);
     CHECK(descriptions.front().first.empty());

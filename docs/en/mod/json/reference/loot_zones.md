@@ -21,5 +21,5 @@ creating a zone, independently of its displayed type:
 ```
 
 When omitted or empty, the translated type name is used, including any icon
-prefix. Existing zone names are preserved. Zone-specific suggestions, such as
-a construction blueprint or a custom loot filter, retain precedence.
+prefix. Existing zone names are preserved. Construction blueprint and seed suggestions retain precedence. Custom loot
+filters use the type default name; the filter expression appears only in details.
