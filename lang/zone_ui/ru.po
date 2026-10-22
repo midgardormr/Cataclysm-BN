@@ -336,3 +336,6 @@ msgstr "Категории: "
 
 msgid "Choose categories with checkboxes. Specialized zones take priority."
 msgstr "Отметьте нужные категории галочками. Специализированные зоны имеют приоритет."
+
+msgid "PgUp/PgDn: details"
+msgstr "PgUp/PgDn: прокрутка"

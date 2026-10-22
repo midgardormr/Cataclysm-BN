@@ -236,3 +236,17 @@ TEST_CASE( "superzone_food_choices_are_independent_and_filter_is_intersection",
     options.deserialize( filtered_input.get_object() );
     CHECK_FALSE( options.matches( *water ) );
 }
+
+TEST_CASE( "zone_details_panel_grows_and_shrinks_with_selected_content", "[zone_ui]" )
+{
+    const auto short_details = make_zone_panel_layout( 40, 3 );
+    const auto long_details = make_zone_panel_layout( 40, 14 );
+    CHECK( long_details.details_height == 14 );
+    CHECK( long_details.list_height < short_details.list_height );
+    CHECK( long_details.footer_height + long_details.list_height == 40 );
+    CHECK( make_zone_panel_layout( 40, 3 ).details_height == short_details.details_height );
+    const auto overflow = make_zone_panel_layout( 24, 100 );
+    CHECK( overflow.list_height >= 3 );
+    CHECK( overflow.footer_height + overflow.list_height == 24 );
+    CHECK( overflow.details_height < 100 );
+}

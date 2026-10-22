@@ -9541,9 +9541,13 @@ void game::zones_manager()
 
     u.view_offset = tripoint_rel_ms::zero();
 
-    const auto zone_ui_height = 14;
+    auto zone_ui_height = 14;
     const auto shortcuts_height = 5;
-    const auto zone_options_height = zone_ui_height - shortcuts_height - 2;
+    auto zone_options_height = 6;
+    auto details_lines = std::vector<std::string>();
+    auto details_type_rows = 0;
+    auto details_offset = 0;
+    const zone_data *details_zone = nullptr;
 
     const int width = 45;
 
@@ -9566,7 +9570,10 @@ void game::zones_manager()
         }
         offsetX = get_option<std::string>( "SIDEBAR_POSITION" ) != "left" ?
                   TERMX - width : 0;
-        const int w_zone_height = TERMY - zone_ui_height;
+        const auto layout = make_zone_panel_layout( TERMY, details_lines.size() );
+        zone_ui_height = layout.footer_height;
+        zone_options_height = layout.details_height;
+        const auto w_zone_height = layout.list_height;
         max_rows = w_zone_height - 2;
         w_zones = catacurses::newwin( w_zone_height - 2, width - 2,
                                       point( offsetX + 1, 1 ) );
@@ -9577,7 +9584,7 @@ void game::zones_manager()
         w_zones_info_border = catacurses::newwin( zone_ui_height, width,
             point( offsetX, w_zone_height ) );
         w_zones_options = catacurses::newwin( zone_options_height, width - 2,
-                                              point( offsetX + 1, w_zone_height ) );
+                                              point( offsetX + 1, w_zone_height + 1 ) );
 
         ui.position( point( offsetX, 0 ), point( width, TERMY ) );
     } );
@@ -9599,6 +9606,8 @@ void game::zones_manager()
     ctxt.register_action( "TOGGLE_ZONE_OVERLAY" );
     ctxt.register_action( "debug_submap_grid" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    ctxt.register_action( "PAGE_UP" );
+    ctxt.register_action( "PAGE_DOWN" );
 
     auto &mgr = zone_manager::get_manager();
     int start_index = 0;
@@ -9628,27 +9637,54 @@ void game::zones_manager()
 
     auto zones = get_zones();
 
-    auto zones_manager_options = [&]() {
-        werase( w_zones_options );
-
-        if( zone_cnt > 0 ) {
-            const auto &zone = zones[active_index].get();
-            const auto content_width = getmaxx( w_zones_options ) - 2;
-            mvwprintz( w_zones_options, point( 1, 0 ), c_light_gray, _( "Zone type:" ) );
-            auto y = 1 + fold_and_print_from( w_zones_options, point( 1, 1 ), content_width, 0,
-                                              c_light_gray, "%s", mgr.get_name_from_type( zone.get_type() ) );
-            if( zone.has_options() ) {
-                ++y;
-                for( const auto &desc : zone.get_options().get_descriptions() ) {
-                    if( y >= getmaxy( w_zones_options ) ) {
-                        break;
-                    }
-                    y += fold_and_print_from( w_zones_options, point( 1, y ), content_width, 0,
-                                              c_white, "%s%s", desc.first, desc.second );
+    auto refresh_details = [&]() {
+        details_lines.clear();
+        details_type_rows = 0;
+        const auto zone = zone_cnt > 0 ? &zones[active_index].get() : nullptr;
+        if( zone != details_zone ) {
+            details_offset = 0;
+            details_zone = zone;
+        }
+        if( zone ) {
+            const auto append = [&]( const std::string &text ) {
+                const auto lines = foldstring( text, width - 4 );
+                details_lines.insert( details_lines.end(), lines.begin(), lines.end() );
+            };
+            append( _( "Zone type:" ) );
+            append( mgr.get_name_from_type( zone->get_type() ) );
+            details_type_rows = details_lines.size();
+            if( zone->has_options() ) {
+                details_lines.emplace_back();
+                for( const auto &desc : zone->get_options().get_descriptions() ) {
+                    append( desc.first + desc.second );
                 }
             }
         }
+        const auto layout = make_zone_panel_layout( TERMY, details_lines.size() );
+        if( layout.details_height != zone_options_height ) {
+            ui.mark_resize();
+        }
+        const auto overflow = static_cast<int>( details_lines.size() ) > layout.details_height;
+        const auto visible = layout.details_height - ( overflow ? 1 : 0 );
+        details_offset = std::clamp( details_offset, 0,
+                                    std::max( 0, static_cast<int>( details_lines.size() ) - visible ) );
+    };
 
+    auto zones_manager_options = [&]() {
+        werase( w_zones_options );
+        const auto overflow = static_cast<int>( details_lines.size() ) > getmaxy( w_zones_options );
+        const auto visible = getmaxy( w_zones_options ) - ( overflow ? 1 : 0 );
+        for( const auto y : std::views::iota( 0, visible ) ) {
+            const auto index = y + details_offset;
+            if( index >= static_cast<int>( details_lines.size() ) ) {
+                break;
+            }
+            mvwprintz( w_zones_options, point( 1, y ), index < details_type_rows ? c_light_gray : c_white,
+                       "%s", details_lines[index] );
+        }
+        if( overflow ) {
+            mvwprintz( w_zones_options, point( 1, visible ), c_light_cyan, "%s", _( "PgUp/PgDn: details" ) );
+        }
         wnoutrefresh( w_zones_options );
     };
 
@@ -9836,6 +9872,10 @@ void game::zones_manager()
 
                 stuff_changed = true;
             } while( false );
+        } else if( action == "PAGE_UP" ) {
+            details_offset -= std::max( 1, zone_options_height - 2 );
+        } else if( action == "PAGE_DOWN" ) {
+            details_offset += std::max( 1, zone_options_height - 2 );
         } else if( action == "SHOW_ALL_ZONES" ) {
             show_all_zones = !show_all_zones;
             zones = get_zones();
@@ -9997,6 +10037,7 @@ void game::zones_manager()
         // call to `ui_manager::redraw`.
         //NOLINTNEXTLINE(clang-analyzer-deadcode.DeadStores)
         zone_blink = zone_cnt > 0;
+        refresh_details();
         g->invalidate_main_ui_adaptor();
 
         ui_manager::redraw();

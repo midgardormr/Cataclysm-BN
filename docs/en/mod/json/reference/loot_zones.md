@@ -55,3 +55,10 @@ zones, then a matching superzone, then the dump zone. Destination availability
 includes map bounds, item placement permissions, item count and cargo/tile volume.
 Full or blocked specialized zones therefore allow a general fallback. Pathfinding
 and NPC hauling behavior are not changed by this prototype.
+
+
+The selected-zone details panel measures wrapped type/option lines and grows
+upwards as needed, shrinking the list of zones. Switching to a shorter zone
+shrinks it again; shortcut rows remain anchored to the bottom. If details exceed
+the available screen height, PgUp/PgDn scroll them and a hint is displayed. The
+layout retains at least one visible zone row and does not overlap shortcut rows.
