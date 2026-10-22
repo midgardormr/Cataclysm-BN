@@ -33,3 +33,25 @@ use the bundled Symbols Nerd Font and occupy two terminal cells. See
 The prototype's Russian zone-name catalogue is in `lang/zone_ui/ru.po`.
 Compile it with `msgfmt -o lang/zone_ui/ru.mo lang/zone_ui/ru.po`; it is loaded
 alongside the base translation catalogue.
+
+
+## Superzone templates (prototype)
+
+The creation picker inserts cyan, icon-free templates before the food, weapon,
+tool and material groups. Existing ordinary types remain available. Templates
+create `LOOT_CUSTOM`, not new zone IDs. Creation and category editing use a
+checkbox list. At least one category is required; cancelling restores the prior
+selection. An optional additional text filter is combined with categories using
+AND. Selected categories use stable zone IDs and do not depend on translated
+labels; food and drinks are split into perishable/non-perishable groups.
+
+Custom options save `superzone` (template ID), `categories` (selected category
+zone IDs), and the existing `mark` (additional filter). Legacy custom zones
+without these fields keep their text-filter behavior. Templates currently live
+in `loot_zone_presets()` in `clzones.cpp`.
+
+Sorting checks existing explicit text filters, then available specialized
+zones, then a matching superzone, then the dump zone. Destination availability
+includes map bounds, item placement permissions, item count and cargo/tile volume.
+Full or blocked specialized zones therefore allow a general fallback. Pathfinding
+and NPC hauling behavior are not changed by this prototype.

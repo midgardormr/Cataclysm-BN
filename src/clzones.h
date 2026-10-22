@@ -20,6 +20,7 @@
 #include "type_id.h"
 #include "translations.h"
 
+struct loot_zone_preset;
 class JsonIn;
 class JsonObject;
 class JsonOut;
@@ -228,8 +229,11 @@ class blueprint_options : public zone_options, public mark_option
 class loot_options : public zone_options, public mark_option
 {
     private:
-        // basic item filter.
+        // Additional text filter; category selections are stored independently of language.
         std::string mark;
+        std::string superzone;
+        std::vector<zone_type_id> categories;
+        auto query_categories() -> bool;
 
         enum query_loot_result {
             canceled,
@@ -240,6 +244,9 @@ class loot_options : public zone_options, public mark_option
         query_loot_result query_loot();
 
     public:
+        auto set_preset( const loot_zone_preset &preset ) -> void;
+        auto is_superzone() const -> bool { return !superzone.empty(); }
+        auto matches( const item &candidate ) const -> bool;
         std::string get_mark() const override {
             return mark;
         }
@@ -451,7 +458,8 @@ class zone_manager
         bool has_near( const zone_type_id &type, const tripoint_abs_ms &where, int range = MAX_DISTANCE,
                        const faction_id &fac = your_fac ) const;
         bool has_loot_dest_near( const tripoint_abs_ms &where ) const;
-        bool custom_loot_has( const tripoint_abs_ms &where, const item *it ) const;
+        bool custom_loot_has( const tripoint_abs_ms &where, const item *it,
+                              bool regular_only = false ) const;
         std::unordered_set<tripoint_abs_ms> get_near( const zone_type_id &type,
                 const tripoint_abs_ms &where,
                 int range = MAX_DISTANCE, const item *it = nullptr, const faction_id &fac = your_fac ) const;
@@ -465,7 +473,7 @@ class zone_manager
         const zone_data *get_bottom_zone( const tripoint_abs_ms &where,
                                           const faction_id &fac = your_fac ) const;
         std::optional<std::string> query_name( const std::string &default_name = "" ) const;
-        std::optional<zone_type_id> query_type() const;
+        std::optional<zone_type_id> query_type( loot_options *preset = nullptr ) const;
         void swap( zone_data &a, zone_data &b );
         void rotate_zones( map &target_map, int turns );
         // list of tripoints of zones that are loot zones only

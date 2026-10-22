@@ -167,3 +167,5 @@ rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
 - Symbols Nerd Font includes multiple upstream icon sets; preserve the distributed license and attribution table alongside the font, plus the selected set’s upstream license. Do not describe the entire collection as covered solely by its wrapper MIT license.
 
 - JSON literals accept Unicode surrogate-pair escapes or literal UTF-8, not C++ \UXXXXXXXX escapes; keep this distinction in raw-string test fixtures.
+
+- Destination capacity checks need a mutable map reference: map::i_at and map::free_volume are non-const in this branch.

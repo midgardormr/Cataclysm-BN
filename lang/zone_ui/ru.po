@@ -285,3 +285,54 @@ msgstr "Автоматически пить"
 msgctxt "zone name LOOT_TOOLS"
 msgid "Tools"
 msgstr "Инструменты"
+
+msgid "All tools"
+msgstr "Все инструменты"
+
+msgid "Tools"
+msgstr "Инструменты"
+
+msgid "All food and drinks"
+msgstr "Вся еда и напитки"
+
+msgid "Food and drinks"
+msgstr "Еда и напитки"
+
+msgid "All weapons and ammunition"
+msgstr "Всё оружие и боеприпасы"
+
+msgid "Weapons and ammunition"
+msgstr "Оружие и боеприпасы"
+
+msgid "All materials"
+msgstr "Все материалы"
+
+msgid "Materials"
+msgstr "Материалы"
+
+msgid "Confirm selection"
+msgstr "Подтвердить выбор"
+
+msgid "Select all"
+msgstr "Выбрать всё"
+
+msgid "Clear selection"
+msgstr "Снять все галочки"
+
+msgid "Select at least one category."
+msgstr "Выберите хотя бы одну категорию."
+
+msgid "Edit superzone"
+msgstr "Настройка суперзоны"
+
+msgid "Categories"
+msgstr "Категории"
+
+msgid "Additional filter"
+msgstr "Дополнительный фильтр"
+
+msgid "Categories: "
+msgstr "Категории: "
+
+msgid "Choose categories with checkboxes. Specialized zones take priority."
+msgstr "Отметьте нужные категории галочками. Специализированные зоны имеют приоритет."

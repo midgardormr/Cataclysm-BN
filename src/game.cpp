@@ -9796,13 +9796,15 @@ void game::zones_manager()
     do {
         if( action == "ADD_ZONE" ) {
             do { // not a loop, just for quick bailing out if canceled
-                const auto maybe_id = mgr.query_type();
+                auto preset = make_shared_fast<loot_options>();
+                const auto maybe_id = mgr.query_type( preset.get() );
                 if( !maybe_id.has_value() ) {
                     break;
                 }
 
                 const zone_type_id &id = maybe_id.value();
-                auto options = zone_options::create( id );
+                auto options = preset->is_superzone() ? shared_ptr_fast<zone_options>( preset ) :
+                               zone_options::create( id );
 
                 if( !options->query_at_creation() ) {
                     break;
