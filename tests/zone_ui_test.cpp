@@ -57,7 +57,7 @@ TEST_CASE( "whole_zone_icons_occupy_two_cells", "[zone][zone_ui]" )
     CHECK( utf8_width( "\U000f0ae2" ) == 2 );
     CHECK( utf8_width( "\U000f0493" ) == 2 );
     CHECK( utf8_width( "\U000f032a" ) == 2 );
-    CHECK( utf8_width( "\U000f0f58" ) == 2 );
+    CHECK( utf8_width( "\U000f01a6" ) == 2 );
     CHECK( utf8_width( "\U000f068c" ) == 2 );
     CHECK( utf8_width( "\U000f0710" ) == 2 );
     CHECK( utf8_width( "\U000f08ea" ) == 2 );

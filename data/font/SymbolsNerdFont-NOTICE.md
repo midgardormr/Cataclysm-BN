@@ -28,6 +28,10 @@ The full upstream font is retained, without subsetting, renaming or changing gly
 - External terminal renderers require a compatible font and cell-width handling;
   the bundled font integration applies to SDL graphics builds.
 
+The SDL font renderer rasterizes selected zone glyphs at 90% of the configured
+font point size, retaining their two-cell advance and centering. Ordinary text
+uses its original size. This does not modify the bundled font file.
+
 ## Selected categories
 
 | Category | Nerd Fonts name | Unicode |
@@ -42,7 +46,7 @@ The full upstream font is retained, without subsetting, renaming or changing gly
 | Особые предметы | `md-star_four_points` | U+F0AE2 |
 | Техника | `md-cog` | U+F0493 |
 | Сырьё и припасы | `md-leaf` | U+F032A |
-| Материалы | `md-layers_triple` | U+F0F58 |
+| Материалы | `md-cube` | U+F01A6 |
 | Останки | `md-skull` | U+F068C |
 | Работы | `md-shovel` | U+F0710 |
 | Строительство | `md-hammer` | U+F08EA |

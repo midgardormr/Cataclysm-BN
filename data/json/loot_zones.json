@@ -333,7 +333,7 @@
     "name": { "str": "Scrap Metal", "ctxt": "zone name LOOT_SCRAP_METAL" },
     "description": "Destination for scrap metal.",
     "color": "light_gray",
-    "icon": "󰽘"
+    "icon": "󰆦"
   },
   {
     "id": "LOOT_SCRAP_ELECTRONICS",
@@ -341,7 +341,7 @@
     "name": { "str": "Scrap Electronics", "ctxt": "zone name LOOT_SCRAP_ELECTRONICS" },
     "description": "Destination for scrap electronics.",
     "color": "light_gray",
-    "icon": "󰽘"
+    "icon": "󰆦"
   },
   {
     "id": "LOOT_SCRAP_FABRIC",
@@ -349,7 +349,7 @@
     "name": { "str": "Scrap Fabric", "ctxt": "zone name LOOT_SCRAP_FABRIC" },
     "description": "Destination for scrap fabric.",
     "color": "light_gray",
-    "icon": "󰽘"
+    "icon": "󰆦"
   },
   {
     "id": "LOOT_SCRAP_WOOD",
@@ -357,7 +357,7 @@
     "name": { "str": "Scrap Wood", "ctxt": "zone name LOOT_SCRAP_WOOD" },
     "description": "Destination for scrap wood.",
     "color": "light_gray",
-    "icon": "󰽘"
+    "icon": "󰆦"
   },
   {
     "id": "LOOT_SCRAP_PLASTIC",
@@ -365,7 +365,7 @@
     "name": { "str": "Scrap Plastic", "ctxt": "zone name LOOT_SCRAP_PLASTIC" },
     "description": "Destination for scrap plastic.",
     "color": "light_gray",
-    "icon": "󰽘"
+    "icon": "󰆦"
   },
   {
     "id": "LOOT_SCRAP_CERAMICS",
@@ -373,7 +373,7 @@
     "name": { "str": "Scrap Ceramics", "ctxt": "zone name LOOT_SCRAP_CERAMICS" },
     "description": "Destination for scrap ceramics.",
     "color": "light_gray",
-    "icon": "󰽘"
+    "icon": "󰆦"
   },
   {
     "id": "LOOT_SCRAP_GLASS",
@@ -381,7 +381,7 @@
     "name": { "str": "Scrap Glass", "ctxt": "zone name LOOT_SCRAP_GLASS" },
     "description": "Destination for scrap glass.",
     "color": "light_gray",
-    "icon": "󰽘"
+    "icon": "󰆦"
   },
   {
     "id": "LOOT_VALUABLES",
