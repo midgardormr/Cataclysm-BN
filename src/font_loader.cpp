@@ -31,9 +31,12 @@ void font_loader::load_throws( const std::string &path )
             config.read( "overmap_typeface", overmap_typeface );
         }
 
-        if( !std::ranges::contains( typeface, "data/font/ZoneIconsWhole.ttf" ) ) {
-            typeface.insert( typeface.begin(), "data/font/ZoneIconsWhole.ttf" );
-        }
+        // Resolve the bundled icon font through the resource directory, independent of cwd.
+        std::erase( typeface, "data/font/ZoneIconsWhole.ttf" );
+        std::erase( typeface, "SymbolsNerdFont-Regular.ttf" );
+        const auto icon_font = PATH_INFO::fontdir() + "SymbolsNerdFont-Regular.ttf";
+        std::erase( typeface, icon_font );
+        typeface.insert( typeface.begin(), icon_font );
         ensure_unifont_loaded( typeface );
         ensure_unifont_loaded( map_typeface );
         ensure_unifont_loaded( overmap_typeface );

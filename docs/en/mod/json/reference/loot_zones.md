@@ -27,7 +27,8 @@ filters use the type default name; the filter expression appears only in details
 The optional `icon` is a non-translatable glyph, drawn before the localized
 name in the type picker, selected type details, and default suggested name.
 `name` accepts a translation object with `str` and `ctxt`. Built-in zone glyphs
-U+E240–U+E251 use the bundled ZoneIconsWhole font and occupy two terminal cells.
+use the bundled Symbols Nerd Font and occupy two terminal cells. See
+`data/font/SymbolsNerdFont-NOTICE.md` for the selected code points and provenance.
 
 The prototype's Russian zone-name catalogue is in `lang/zone_ui/ru.po`.
 Compile it with `msgfmt -o lang/zone_ui/ru.mo lang/zone_ui/ru.po`; it is loaded

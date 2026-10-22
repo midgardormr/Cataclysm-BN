@@ -163,3 +163,7 @@ rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
 - Never run concurrent builds against the same build directory; finish or stop the existing build before starting another.
 
 - Language-switch tests must use IDs from `data/raw/languages.json` (English is `en_US`, not `en`).
+
+- Symbols Nerd Font includes multiple upstream icon sets; preserve the distributed license and attribution table alongside the font, plus the selected set’s upstream license. Do not describe the entire collection as covered solely by its wrapper MIT license.
+
+- JSON literals accept Unicode surrogate-pair escapes or literal UTF-8, not C++ \UXXXXXXXX escapes; keep this distinction in raw-string test fixtures.

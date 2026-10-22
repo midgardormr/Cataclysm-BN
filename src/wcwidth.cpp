@@ -1,5 +1,7 @@
 #include "wcwidth.h"
 
+#include "zone_icons.h"
+
 /*
  * This is an implementation of wcwidth() and wcswidth() (defined in
  * IEEE Std 1002.1-2001) for Unicode.
@@ -93,9 +95,8 @@ static uint32_t bisearch( uint32_t ucs, const struct interval *table, uint32_t m
 
 int mk_wcwidth( uint32_t ucs )
 {
-    // Experimental ZoneIcons full glyphs occupy two terminal cells.
-    // The older split glyphs in U+E200-U+E223 remain single-cell.
-    if( ucs >= 0xe240 && ucs <= 0xe251 ) {
+    // Reserve two cells only for the selected bundled zone icons.
+    if( std::ranges::contains( zone_icon_codepoints, ucs ) ) {
         return 2;
     }
 

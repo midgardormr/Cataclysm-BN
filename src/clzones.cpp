@@ -1,5 +1,7 @@
 #include "clzones.h"
 
+#include "zone_icons.h"
+
 #include "avatar.h"
 #include "cata_utility.h"
 #include "construction.h"
@@ -140,9 +142,9 @@ auto make_zone_bounds( const tripoint_abs_ms &first, const tripoint_abs_ms &seco
 {
     return zone_bounds{
         tripoint_abs_ms( std::min( first.x(), second.x() ), std::min( first.y(), second.y() ),
-                         std::min( first.z(), second.z() ) ),
+        std::min( first.z(), second.z() ) ),
         tripoint_abs_ms( std::max( first.x(), second.x() ), std::max( first.y(), second.y() ),
-                         std::max( first.z(), second.z() ) )
+        std::max( first.z(), second.z() ) )
     };
 }
 
@@ -223,17 +225,17 @@ namespace
 auto blueprint_layout_to_string( const blueprint_options::blueprint_layout layout ) -> std::string
 {
     switch( layout ) {
-        case blueprint_options::blueprint_layout::rectangle_fill:
-            return "rectangle_fill";
-        case blueprint_options::blueprint_layout::rectangle_border:
-            return "rectangle_border";
-        case blueprint_options::blueprint_layout::circle_fill:
-            return "circle_fill";
-        case blueprint_options::blueprint_layout::circle_border:
-            return "circle_border";
-    }
-    debugmsg( "Unhandled blueprint layout" );
-    return "rectangle_fill";
+    case blueprint_options::blueprint_layout::rectangle_fill:
+        return "rectangle_fill";
+    case blueprint_options::blueprint_layout::rectangle_border:
+        return "rectangle_border";
+    case blueprint_options::blueprint_layout::circle_fill:
+        return "circle_fill";
+    case blueprint_options::blueprint_layout::circle_border:
+        return "circle_border";
+}
+debugmsg( "Unhandled blueprint layout" );
+return "rectangle_fill";
 }
 
 auto blueprint_layout_from_string( const std::string &value ) -> blueprint_options::blueprint_layout
@@ -253,8 +255,8 @@ auto blueprint_layout_from_string( const std::string &value ) -> blueprint_optio
 auto blueprint_layout_description( const blueprint_options::blueprint_layout layout ) -> std::string
 {
     switch( layout ) {
-        case blueprint_options::blueprint_layout::rectangle_fill:
-            return _( "Filled rectangle" );
+    case blueprint_options::blueprint_layout::rectangle_fill:
+        return _( "Filled rectangle" );
         case blueprint_options::blueprint_layout::rectangle_border:
             return _( "Rectangle border" );
         case blueprint_options::blueprint_layout::circle_fill:
@@ -278,7 +280,7 @@ auto make_circle_shape( const zone_bounds &bounds, const bool border_only ) -> c
     const double center_x = static_cast<double>( bounds.min.x() + bounds.max.x() ) / 2.0;
     const double center_y = static_cast<double>( bounds.min.y() + bounds.max.y() ) / 2.0;
     const double radius = static_cast<double>( std::max( bounds.max.x() - bounds.min.x(),
-                          bounds.max.y() - bounds.min.y() ) ) / 2.0;
+        bounds.max.y() - bounds.min.y() ) ) / 2.0;
     const double outer_radius = radius + 1.0;
     const double inner_radius = border_only ? std::max( radius - 1.0, 0.0 ) : 0.0;
 
@@ -533,7 +535,7 @@ plot_options::query_seed_result plot_options::query_seed()
     } );
     auto &mgr = zone_manager::get_manager();
     const std::unordered_set<tripoint_abs_ms> &zone_src_set = mgr.get_near( zone_LOOT_SEEDS,
-            p.abs_pos(), 60 );
+        p.abs_pos(), 60 );
     for( const tripoint_abs_ms &elem : zone_src_set ) {
         auto elem_loc = abs_to_bub( elem );
         for( item * const &it : here.i_at( elem_loc ) ) {
@@ -764,7 +766,15 @@ std::optional<zone_type_id> zone_manager::query_type() const
                std::back_inserter<std::vector<std::pair<zone_type_id, zone_type>>>( types_vec ) );
     std::sort( types_vec.begin(), types_vec.end(),
     []( const std::pair<zone_type_id, zone_type> &lhs, const std::pair<zone_type_id, zone_type> &rhs ) {
-        return localized_compare( lhs.second.display_name(), rhs.second.display_name() );
+        const auto left = lhs.second.display_name();
+        const auto right = rhs.second.display_name();
+        const auto rank = []( const std::string & text ) {
+            const auto codepoints = utf8_to_utf32( text );
+            return zone_icon_order( codepoints.empty() ? 0 : codepoints.front() );
+        };
+        const auto left_rank = rank( left );
+        const auto right_rank = rank( right );
+        return left_rank == right_rank ? localized_compare( left, right ) : left_rank < right_rank;
     } );
 
     uilist as_m;
@@ -1310,7 +1320,7 @@ void zone_manager::add( const std::string &name, const zone_type_id &type, const
     map &here = get_map();
     new_zone.set_dimension( here.get_bound_dimension() );
     if( const std::optional<vpart_reference> vp = here.veh_at( abs_to_bub(
-                start ) ).part_with_feature( "CARGO", false ) ) {
+            start ) ).part_with_feature( "CARGO", false ) ) {
         // TODO:Allow for loot zones on vehicles to be larger than 1x1
         if( start == end && query_yn( _( "Bind this zone to the cargo part here?" ) ) ) {
             // TODO: refactor zone options for proper validation code
@@ -1372,26 +1382,26 @@ bool zone_manager::remove( zone_data &zone )
 auto zone_manager::remove_dimension_zones( const dimension_id &dim_id ) -> bool
 {
     if( dim_id.is_empty() ) {
-        return false;
-    }
+    return false;
+}
 
-    namespace ranges = std::ranges;
+namespace ranges = std::ranges;
     using namespace std::views;
-    auto remaining = zones |
-    filter( [&]( const auto & zone ) { return zone.get_dimension() != dim_id; } ) |
+        auto remaining = zones |
+        filter( [&]( const auto & zone ) { return zone.get_dimension() != dim_id; } ) |
     ranges::to<std::vector>();
     if( remaining.size() == zones.size() ) {
-        return true;
-    }
+    return true;
+}
 
-    auto restore = on_out_of_scope( [&]() { zones.swap( remaining ); } );
+auto restore = on_out_of_scope( [&]() { zones.swap( remaining ); } );
     zones.swap( remaining );
     if( !save_zones() ) {
-        return false;
-    }
-    restore.cancel();
-    cache_data();
-    return true;
+    return false;
+}
+restore.cancel();
+cache_data();
+return true;
 }
 
 void zone_manager::swap( zone_data &a, zone_data &b )
@@ -1619,7 +1629,7 @@ void zone_manager::revert_vzones()
     for( auto zone : removed_vzones ) {
         //Code is copied from add() to avoid yn query
         if( const std::optional<vpart_reference> vp = here.veh_at( abs_to_bub(
-                    zone.get_start_point() ) ).part_with_feature( "CARGO", false ) ) {
+                zone.get_start_point() ) ).part_with_feature( "CARGO", false ) ) {
             zone.set_is_vehicle( true );
             vp->vehicle().loot_zones.emplace( vp->mount(), zone );
             vp->vehicle().zones_dirty = false;
