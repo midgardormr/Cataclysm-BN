@@ -339,3 +339,36 @@ msgstr "Отметьте нужные категории галочками. С�
 
 msgid "PgUp/PgDn: details"
 msgstr "PgUp/PgDn: прокрутка"
+
+msgid "Toggle the whole group; individual categories can be changed below."
+msgstr "Выберите всю группу или отметьте отдельные категории ниже."
+
+msgid "Create zone: categories and area rules"
+msgstr "Создание зоны: категории и правила"
+
+msgid "Selected categories share one storage zone. Area rules are created separately on the same rectangle. Specialized storage takes priority."
+msgstr "Выбранные категории образуют один склад. Правила создаются отдельными зонами в той же области. Специализированные склады имеют приоритет."
+
+msgid "Manual text filter..."
+msgstr "Настраиваемый фильтр…"
+
+msgid "Use the original item filter syntax, without category checkboxes."
+msgstr "Введите фильтр вручную, используя синтаксис игры."
+
+msgid "Standard zone type..."
+msgstr "Стандартный тип зоны…"
+
+msgid "Create any standard zone, including construction, farming and vehicle zones."
+msgstr "Создать стандартную зону, в том числе для строительства, фермерства или транспорта."
+
+msgid "Area rules (separate zones on the same rectangle)"
+msgstr "Правила области (отдельные зоны)"
+
+msgid "Select at least one category or area rule."
+msgstr "Выберите хотя бы одну категорию или правило области."
+
+msgid "Edit category storage"
+msgstr "Настройка категорий склада"
+
+msgid "Category storage"
+msgstr "Склад по категориям"

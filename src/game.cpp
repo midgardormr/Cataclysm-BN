@@ -186,6 +186,7 @@
 #include "world_type.h"
 #include "worldfactory.h"
 #include "zone_ui.h"
+#include "zone_presets.h"
 
 #include <algorithm>
 #include <bitset>
@@ -9832,40 +9833,55 @@ void game::zones_manager()
     do {
         if( action == "ADD_ZONE" ) {
             do { // not a loop, just for quick bailing out if canceled
-                auto preset = make_shared_fast<loot_options>();
-                const auto maybe_id = mgr.query_type( preset.get() );
-                if( !maybe_id.has_value() ) {
+                const auto selection = query_zone_creation();
+                if( !selection ) {
                     break;
                 }
-
-                const zone_type_id &id = maybe_id.value();
-                auto options = preset->is_superzone() ? shared_ptr_fast<zone_options>( preset ) :
-                               zone_options::create( id );
-
-                if( !options->query_at_creation() ) {
+                struct pending_zone {
+                    zone_type_id type;
+                    std::string name;
+                    shared_ptr_fast<zone_options> options;
+                };
+                auto pending = std::vector<pending_zone>();
+                if( selection->single_type || !selection->categories.empty() ) {
+                    const auto id = selection->single_type.value_or( zone_type_id( "LOOT_CUSTOM" ) );
+                    auto options = zone_options::create( id );
+                    if( !selection->single_type ) {
+                        auto storage = make_shared_fast<loot_options>();
+                        storage->set_preset( { .id = "categories", .title = "", .name = "",
+                                              .group = 0, .categories = selection->categories } );
+                        options = storage;
+                    } else if( !options->query_at_creation() ) {
+                        break;
+                    }
+                    auto default_name = options->get_zone_name_suggestion();
+                    if( default_name.empty() ) {
+                        default_name = id->default_name();
+                    }
+                    const auto name = mgr.query_name( default_name );
+                    if( !name ) {
+                        break;
+                    }
+                    pending.push_back( { .type = id, .name = *name, .options = options } );
+                }
+                for( const auto &rule : selection->rules ) {
+                    pending.push_back( { .type = rule, .name = rule->default_name(),
+                                         .options = zone_options::create( rule ) } );
+                }
+                if( pending.empty() ) {
                     break;
                 }
-
-                auto default_name = options->get_zone_name_suggestion();
-                if( default_name.empty() ) {
-                    default_name = id->default_name();
-                }
-                const auto maybe_name = mgr.query_name( default_name );
-                if( !maybe_name.has_value() ) {
-                    break;
-                }
-                const std::string &name = maybe_name.value();
-
-                current_zone_type = id;
-                current_bp_options = std::dynamic_pointer_cast<const blueprint_options>( options );
-                std::optional<std::pair<tripoint_abs_ms, tripoint_abs_ms>> position;
-                position = query_position();
+                current_zone_type = pending.front().type;
+                current_bp_options = std::dynamic_pointer_cast<const blueprint_options>(
+                                         pending.front().options );
+                const auto position = query_position();
                 if( !position ) {
                     break;
                 }
-
-                mgr.add( name, id, g->u.get_faction()->id, false, true, position->first,
-                         position->second, options );
+                for( const auto &entry : pending ) {
+                    mgr.add( entry.name, entry.type, g->u.get_faction()->id, false, true,
+                             position->first, position->second, entry.options );
+                }
 
                 zones = get_zones();
                 active_index = zone_cnt - 1;

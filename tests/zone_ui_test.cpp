@@ -250,3 +250,44 @@ TEST_CASE( "zone_details_panel_grows_and_shrinks_with_selected_content", "[zone_
     CHECK( overflow.footer_height + overflow.list_height == 24 );
     CHECK( overflow.details_height < 100 );
 }
+
+TEST_CASE( "zone_creation_checklist_mixes_categories_without_rules_becoming_storage",
+           "[zone_ui][superzone]" )
+{
+    const auto available = zone_storage_categories();
+    const auto rules = zone_creation_rules();
+    CHECK( std::ranges::contains( available, zone_type_id( "LOOT_BOOKS" ) ) );
+    CHECK( std::ranges::contains( available, zone_type_id( "LOOT_WORKSHOP_TOOLS" ) ) );
+    CHECK_FALSE( std::ranges::contains( available, zone_type_id( "LOOT_CUSTOM" ) ) );
+    for( const auto &rule : rules ) {
+        CHECK( rule.is_valid() );
+        CHECK_FALSE( std::ranges::contains( available, rule ) );
+    }
+    auto selected = std::vector<zone_type_id> { zone_type_id( "LOOT_BOOKS" ) };
+    const auto tools = std::ranges::find( loot_zone_presets(), "tools", &loot_zone_preset::id );
+    REQUIRE( tools != loot_zone_presets().end() );
+    toggle_zone_categories( selected, { tools->categories.front() } );
+    toggle_zone_categories( selected, tools->categories );
+    CHECK( selected.size() == tools->categories.size() + 1 );
+    toggle_zone_categories( selected, tools->categories );
+    CHECK( selected == std::vector<zone_type_id> { zone_type_id( "LOOT_BOOKS" ) } );
+    toggle_zone_categories( selected, tools->categories );
+    auto options = loot_options();
+    options.set_preset( { .id = "categories", .title = "", .name = "", .group = 0,
+                          .categories = selected } );
+    CHECK( options.matches( *item::spawn_temporary( "hammer" ) ) );
+    CHECK( options.matches( *item::spawn_temporary( "novel_pulp" ) ) );
+    CHECK_FALSE( options.matches( *item::spawn_temporary( "rock" ) ) );
+    auto out = std::ostringstream();
+    auto json = JsonOut( out );
+    json.start_object();
+    options.serialize( json );
+    json.end_object();
+    auto restored = loot_options();
+    auto stream = std::istringstream( out.str() );
+    auto input = JsonIn( stream );
+    restored.deserialize( input.get_object() );
+    CHECK( restored.matches( *item::spawn_temporary( "hammer" ) ) );
+    CHECK( restored.matches( *item::spawn_temporary( "novel_pulp" ) ) );
+    CHECK_FALSE( restored.matches( *item::spawn_temporary( "rock" ) ) );
+}

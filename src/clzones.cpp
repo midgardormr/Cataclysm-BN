@@ -263,6 +263,13 @@ auto loot_options::matches( const item &candidate ) const -> bool
             category = drink ? ( perishable ? zone_LOOT_PDRINK : zone_LOOT_DRINK ) :
                        ( perishable ? zone_LOOT_PFOOD : zone_LOOT_FOOD );
         }
+        if( std::ranges::contains( categories, zone_LOOT_WOOD ) &&
+            candidate.has_flag( STATIC( flag_id( "FIREWOOD" ) ) ) ) {
+            category = zone_LOOT_WOOD;
+        }
+        if( std::ranges::contains( categories, zone_LOOT_CORPSE ) && candidate.is_corpse() ) {
+            category = zone_LOOT_CORPSE;
+        }
         if( !std::ranges::contains( categories, category ) ) {
             return false;
         }
@@ -270,52 +277,161 @@ auto loot_options::matches( const item &candidate ) const -> bool
     return is_superzone() && mark.empty() ? true : item_filter_from_string( mark )( candidate );
 }
 
-auto loot_options::query_categories() -> bool
+auto zone_creation_rules() -> std::vector<zone_type_id>
 {
-    const auto found = std::ranges::find( loot_zone_presets(), superzone, &loot_zone_preset::id );
-    if( found == loot_zone_presets().end() ) {
-        return false;
+    return { zone_LOOT_UNSORTED, zone_LOOT_IGNORE, zone_type_id( "LOOT_IGNORE_FAVORITES" ),
+             zone_LOOT_DUMP, zone_NO_AUTO_PICKUP, zone_NO_NPC_PICKUP };
+}
+
+auto zone_storage_categories() -> std::vector<zone_type_id>
+{
+    const auto rules = zone_creation_rules();
+    auto result = std::vector<zone_type_id>();
+    for( const auto &[id, type] : zone_manager::get_manager().get_types() ) {
+        if( id.str().starts_with( "LOOT_" ) && id != zone_LOOT_CUSTOM &&
+            !std::ranges::contains( rules, id ) ) {
+            result.push_back( id );
+        }
     }
-    const auto original = categories;
-    auto selected = 0;
+    std::ranges::sort( result, []( const auto & left, const auto & right ) {
+        const auto rank = []( const auto & id ) {
+            const auto chars = utf8_to_utf32( id->display_name() );
+            return zone_icon_order( chars.empty() ? 0 : chars.front() );
+        };
+        return rank( left ) == rank( right ) ? localized_compare( left->name(), right->name() ) :
+               rank( left ) < rank( right );
+    } );
+    return result;
+}
+
+auto toggle_zone_categories( std::vector<zone_type_id> &selected,
+                             const std::vector<zone_type_id> &members ) -> void
+{
+    const auto all = std::ranges::all_of( members, [&]( const auto & id ) {
+        return std::ranges::contains( selected, id );
+    } );
+    for( const auto &id : members ) {
+        if( all ) {
+            std::erase( selected, id );
+        } else if( !std::ranges::contains( selected, id ) ) {
+            selected.push_back( id );
+        }
+    }
+}
+
+auto query_zone_creation( const zone_creation_selection &initial,
+                          const bool categories_only ) -> std::optional<zone_creation_selection>
+{
+    struct checklist_row {
+        std::string label;
+        std::string description;
+        std::vector<zone_type_id> members;
+        bool rule = false;
+    };
+    auto rows = std::vector<checklist_row>();
+    const auto available = zone_storage_categories();
+    auto grouped = std::vector<zone_type_id>();
+    for( const auto &preset : loot_zone_presets() ) {
+        auto members = std::vector<zone_type_id>();
+        for( const auto &id : preset.categories ) {
+            if( std::ranges::contains( available, id ) ) {
+                members.push_back( id );
+                grouped.push_back( id );
+            }
+        }
+        if( members.empty() ) {
+            continue;
+        }
+        rows.push_back( { .label = _( preset.title ),
+                          .description = _( "Toggle the whole group; individual categories can be changed below." ),
+                          .members = members } );
+        for( const auto &id : members ) {
+            rows.push_back( { .label = "  " + id->name(), .description = id->desc(), .members = { id } } );
+        }
+    }
+    for( const auto &id : available ) {
+        if( !std::ranges::contains( grouped, id ) ) {
+            rows.push_back( { .label = id->name(), .description = id->desc(), .members = { id } } );
+        }
+    }
+    if( !categories_only ) {
+        for( const auto &id : zone_creation_rules() ) {
+            if( id.is_valid() ) {
+                rows.push_back( { .label = id->name(), .description = id->desc(),
+                                  .members = { id }, .rule = true } );
+            }
+        }
+    }
+    auto selection = initial;
+    auto cursor = 0;
     while( true ) {
         auto menu = uilist();
-        menu.text = _( found->title );
+        menu.text = _( "Create zone: categories and area rules" );
         menu.desc_enabled = true;
-        menu.addentry( 0, true, MENU_AUTOASSIGN, _( "Confirm selection" ) );
-        menu.addentry( 1, true, MENU_AUTOASSIGN, _( "Select all" ) );
-        menu.addentry( 2, true, MENU_AUTOASSIGN, _( "Clear selection" ) );
-        for( const auto i : std::views::iota( 0, static_cast<int>( found->categories.size() ) ) ) {
-            const auto &id = found->categories[i];
-            menu.addentry_desc( i + 3, true, MENU_AUTOASSIGN,
-                                string_format( "[%s] %s", std::ranges::contains( categories, id ) ? "x" : " ", id->name() ),
-                                id->desc() );
+        menu.addentry_desc( 0, true, MENU_AUTOASSIGN, _( "Confirm selection" ),
+                            _( "Selected categories share one storage zone. Area rules are created separately on the same rectangle. Specialized storage takes priority." ) );
+        menu.addentry( 1, true, MENU_AUTOASSIGN, _( "Clear selection" ) );
+        if( !categories_only ) {
+            menu.addentry_desc( 2, true, MENU_AUTOASSIGN, _( "Manual text filter..." ),
+                                _( "Use the original item filter syntax, without category checkboxes." ) );
+            menu.addentry_desc( 3, true, MENU_AUTOASSIGN, _( "Standard zone type..." ),
+                                _( "Create any standard zone, including construction, farming and vehicle zones." ) );
         }
-        menu.selected = selected;
+        const auto offset = categories_only ? 2 : 4;
+        auto rules_heading = false;
+        for( auto i = 0; i < static_cast<int>( rows.size() ); ++i ) {
+            const auto &row = rows[i];
+            if( row.rule && !rules_heading ) {
+                menu.addentry( -1, false, 0, _( "Area rules (separate zones on the same rectangle)" ) );
+                rules_heading = true;
+            }
+            const auto &checked = row.rule ? selection.rules : selection.categories;
+            const auto count = std::ranges::count_if( row.members, [&]( const auto & id ) {
+                return std::ranges::contains( checked, id );
+            } );
+            const auto mark = count == 0 ? " " : count == static_cast<int>( row.members.size() ) ? "x" : "-";
+            menu.addentry_desc( i + offset, true, MENU_AUTOASSIGN,
+                                string_format( "[%s] %s", mark, row.label ), row.description );
+            if( row.members.size() > 1 ) {
+                menu.entries.back().text_color = c_light_cyan;
+            }
+        }
+        menu.selected = cursor;
         menu.query();
-        selected = menu.ret;
+        cursor = menu.selected;
         if( menu.ret < 0 ) {
-            categories = original;
-            return false;
+            return std::nullopt;
         }
         if( menu.ret == 0 ) {
-            if( !categories.empty() ) {
-                return true;
+            if( !selection.categories.empty() || !selection.rules.empty() ) {
+                return selection;
             }
-            popup( _( "Select at least one category." ) );
+            popup( _( "Select at least one category or area rule." ) );
         } else if( menu.ret == 1 ) {
-            categories = found->categories;
-        } else if( menu.ret == 2 ) {
-            categories.clear();
-        } else {
-            const auto &id = found->categories.at( menu.ret - 3 );
-            if( std::ranges::contains( categories, id ) ) {
-                std::erase( categories, id );
-            } else {
-                categories.push_back( id );
+            selection.categories.clear();
+            selection.rules.clear();
+        } else if( !categories_only && menu.ret == 2 ) {
+            return zone_creation_selection{ .single_type = zone_LOOT_CUSTOM };
+        } else if( !categories_only && menu.ret == 3 ) {
+            const auto type = zone_manager::get_manager().query_type();
+            if( type ) {
+                return zone_creation_selection{ .single_type = type };
             }
+        } else {
+            const auto &row = rows.at( menu.ret - offset );
+            toggle_zone_categories( row.rule ? selection.rules : selection.categories, row.members );
         }
     }
+}
+
+auto loot_options::query_categories() -> bool
+{
+    const auto selected = query_zone_creation( { .categories = categories }, true );
+    if( !selected ) {
+        return false;
+    }
+    categories = selected->categories;
+    return true;
 }
 
 shared_ptr_fast<zone_options> zone_options::create( const zone_type_id &type )
@@ -715,7 +831,7 @@ bool loot_options::query()
 {
     if( is_superzone() ) {
         auto menu = uilist();
-        menu.text = _( "Edit superzone" );
+        menu.text = _( "Edit category storage" );
         menu.addentry( 0, true, MENU_AUTOASSIGN, _( "Categories" ) );
         menu.addentry( 1, true, MENU_AUTOASSIGN, _( "Additional filter" ) );
         menu.query();
@@ -726,6 +842,9 @@ bool loot_options::query()
 
 std::string loot_options::get_zone_name_suggestion() const
 {
+    if( superzone == "categories" ) {
+        return _( "Category storage" );
+    }
     const auto found = std::ranges::find( loot_zone_presets(), superzone, &loot_zone_preset::id );
     return found == loot_zone_presets().end() ? std::string() : _( found->name );
 }
@@ -909,7 +1028,7 @@ std::optional<std::string> zone_manager::query_name( const std::string &default_
     }
 }
 
-std::optional<zone_type_id> zone_manager::query_type( loot_options *preset ) const
+std::optional<zone_type_id> zone_manager::query_type( loot_options * /*preset*/ ) const
 {
     const auto &types = get_manager().get_types();
     std::vector<std::pair<zone_type_id, zone_type>> types_vec;
@@ -932,21 +1051,8 @@ std::optional<zone_type_id> zone_manager::query_type( loot_options *preset ) con
     as_m.desc_enabled = true;
     as_m.text = _( "Select zone type:" );
 
-    auto inserted = std::set<int>();
     for( const auto i : std::views::iota( 0, static_cast<int>( types_vec.size() ) ) ) {
         const auto &type = types_vec[i].second;
-        const auto chars = utf8_to_utf32( type.display_name() );
-        const auto group = zone_icon_order( chars.empty() ? 0 : chars.front() );
-        if( preset && inserted.insert( group ).second ) {
-            for( const auto n : std::views::iota( 0, static_cast<int>( loot_zone_presets().size() ) ) ) {
-                const auto &entry = loot_zone_presets()[n];
-                if( entry.group == group ) {
-                    as_m.addentry_desc( types_vec.size() + n, true, MENU_AUTOASSIGN, _( entry.title ),
-                                        _( "Choose categories with checkboxes. Specialized zones take priority." ) );
-                    as_m.entries.back().text_color = c_light_cyan;
-                }
-            }
-        }
         as_m.addentry_desc( i, true, MENU_AUTOASSIGN, type.display_name(), type.desc() );
     }
 
@@ -955,10 +1061,6 @@ std::optional<zone_type_id> zone_manager::query_type( loot_options *preset ) con
         return {};
     }
     const auto index = static_cast<size_t>( as_m.ret );
-    if( index >= types_vec.size() && preset ) {
-        preset->set_preset( loot_zone_presets().at( index - types_vec.size() ) );
-        return zone_LOOT_CUSTOM;
-    }
     return types_vec.at( index ).first;
 }
 
