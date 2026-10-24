@@ -184,3 +184,10 @@ rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
 - Supplemental translation catalogues belong under lang/mo/<locale>/LC_MESSAGES so standard macOS and Android asset packaging includes them; verify both CMake and compile_mo.sh paths.
 
 - Checklist arrow actions can arrive with no selection after an empty search; guard a negative uilist selected index before indexing entries.
+
+## Mandatory cleanup before an upstream Zone Manager PR
+
+- User requirement (2026-10-24): prepare a separate upstream branch containing only changes required by the Zone Manager. Keep prototype-only support in the testing fork.
+- Remove the `zone_ui_translations` target, supplemental `lang/zone_ui` catalogue, `zone-ui.mo` generation/install rules, and special catalogue loading. Use the game's standard translation pipeline for manager strings.
+- Exclude the unrelated macOS packaging fix, the fork-only Windows preview workflow, and task-specific additions to this AGENTS.md from the upstream diff. Audit all remaining files for unrelated changes.
+- Rebuild the game and tests and validate the cleaned branch before proposing the upstream PR. This cleanup is mandatory, not an optional follow-up.
