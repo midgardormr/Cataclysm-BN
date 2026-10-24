@@ -9673,39 +9673,14 @@ void game::zones_manager()
                         heading( _( "Filter:" ) );
                     }
                 }
-                auto description_index = 0;
                 for( const auto &desc : zone->get_options().get_descriptions() ) {
-                    if( category_storage && description_index > 0 ) {
-                        details_lines.emplace_back();
-                        heading( _( "Filter:" ) );
-                    }
                     const auto lines = wrap_zone_filter( desc.first + desc.second, width - 4 );
-                    if( loot && ( !category_storage || description_index > 0 ) ) {
+                    if( loot && !category_storage ) {
                         for( auto row = details_lines.size(); row < details_lines.size() + lines.size(); ++row ) {
                             details_filters.insert( row );
                         }
                     }
-                    ++description_index;
                     details_lines.insert( details_lines.end(), lines.begin(), lines.end() );
-                }
-            }
-            if( category_storage ) {
-                const auto rules = zone_creation_rules();
-                auto first = true;
-                for( const auto &ref : mgr.get_zones() ) {
-                    const auto &other = ref.get();
-                    if( other.get_enabled() && other.get_faction() == zone->get_faction() &&
-                        other.get_dimension() == zone->get_dimension() &&
-                        other.get_start_point() == zone->get_start_point() &&
-                        other.get_end_point() == zone->get_end_point() &&
-                        std::ranges::contains( rules, other.get_type() ) ) {
-                        if( first ) {
-                            details_lines.emplace_back();
-                            heading( _( "Area rules:" ) );
-                            first = false;
-                        }
-                        append( mgr.get_name_from_type( other.get_type() ) );
-                    }
                 }
             }
         }
@@ -9921,9 +9896,18 @@ void game::zones_manager()
                     }
                     pending.push_back( { .type = id, .name = *name, .options = options } );
                 }
+                auto canceled = false;
                 for( const auto &rule : selection->rules ) {
-                    pending.push_back( { .type = rule, .name = rule->name(),
+                    const auto name = mgr.query_name( rule->name() );
+                    if( !name ) {
+                        canceled = true;
+                        break;
+                    }
+                    pending.push_back( { .type = rule, .name = *name,
                                          .options = zone_options::create( rule ) } );
+                }
+                if( canceled ) {
+                    continue;
                 }
                 if( pending.empty() ) {
                     break;

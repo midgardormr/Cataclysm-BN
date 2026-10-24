@@ -11,12 +11,13 @@ with `str` and `ctxt`.
 
 The creation checklist offers groups and individual storage categories. Selected
 categories create one `LOOT_CUSTOM` zone. Area rules create separate native zones
-on the same rectangle. Native functions without extra options can be checked alongside storage;
-functions requiring a seed or construction project retain individual setup. The manual custom filter remains a separate
+on the same rectangle. Native functions can be checked alongside storage where appropriate. Construction,
+tree cutting, mining, fishing and farming open separately. Each created zone asks for a name. The manual custom filter remains a separate
 text-only option using the original item filter syntax.
 
 Custom options save `superzone` (selection mode), `categories` (stable zone IDs),
-and `mark` (optional additional filter, combined with categories using AND).
+or `mark` (the text filter for manual zones). Category storage cannot add a text filter;
+editing it opens the category checklist directly.
 Legacy custom zones without category fields keep their text-filter behavior.
 The ordered groups are loaded from `data/json/loot_zone_groups.json`.
 Unknown storage types are retained as individual entries.
@@ -33,15 +34,13 @@ Overlapping custom zones accept the union of their matching filters; an item at
 a custom source zone is retained only if that zone accepts it.
 
 The details panel shows selected category names directly under "Zone type:".
-Enabled area rules on the same rectangle are listed separately after a blank
-line. Manual custom zones show their type followed by a blank line and the raw
+Other zones on the same rectangle are not included in its description.
+Area rules remain independent zones and apply to their own tiles.
+Manual custom zones show their type followed by a blank line and the raw
 filter. Comma-separated conditions move intact to the next line whenever they
 fit the panel width. Conditions wider than the entire panel must still wrap.
 Details grow upwards, retaining the bottom shortcuts and at least one list row;
 PgUp/PgDn scroll content that exceeds the available height.
-
-The prototype's Russian catalogue is `lang/zone_ui/ru.po`, compiled to `lang/mo/ru/LC_MESSAGES/zone-ui.mo`
-and loaded alongside the base translation catalogue.
 
 ## Configuring the creation checklist
 
@@ -64,7 +63,7 @@ Changing the game language changes group and type labels. Instance names already
 saved by the player remain literal editable names.
 
 `kind` is `storage` (combined category checkbox), `activity` (native functions, with individual setup when needed), or `rules` (separate native zones on the chosen rectangle). Storage groups
-come first, activity groups next, rules last. Within each section `sort_order`
+come first, followed by rules and then activity groups. Within each section `sort_order`
 controls the order, with `id` as a deterministic tie breaker. Members follow the
 order of `categories`. Duplicate members appear only in their first group;
 references to zone types not installed in the current world are skipped.
@@ -84,8 +83,9 @@ without copying the original definition:
 New storage zone types remain selectable even before they are grouped: types
 with a `LOOT_` ID, types referenced by an item category's `zone`, and explicitly
 configured storage members are discovered from the loaded world data. Ungrouped
-storage appears after configured storage groups, sorted by translated name.
-All other native types remain accessible through the standard type picker.
+storage appears after configured storage groups, sorted by stable zone ID.
+Ungrouped native types appear under "Other zone types" and open individually.
+The enabled manager never opens the legacy type picker.
 A new item category still needs its usual zone mapping for category sorting;
 this UI does not invent sorting behavior for categories without a destination.
 
@@ -106,3 +106,16 @@ or sorting behavior. In the checkbox manager, Left and Right both toggle the
 highlighted checkbox; Enter on a category confirms the current selection. Service
 entries and native types requiring setup retain their normal Enter action.
 Unassigned categories use stable zone IDs for ordering, independent of language.
+
+Selection markers are gray `−` (unselected), green `+` (selected), and yellow `~`
+(partially selected group). Descriptions follow the highlighted entry, with current
+key bindings shown underneath after a blank line.
+
+The Interface option **Zone manager width** sets the creation/category checklist width
+in character cells (default 56, range 40–120). The window is capped to the screen width;
+control hints use two lines below the selected entry description.
+
+Editing an existing zone type also uses the manager when enabled. One existing zone
+can become category storage or one native type; extra area rules must be created
+as separate zones. Its name, bounds, enabled state, faction and vehicle binding
+are retained, and cancellation leaves it unchanged.

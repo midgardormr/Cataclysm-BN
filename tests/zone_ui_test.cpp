@@ -52,22 +52,6 @@ TEST_CASE( "custom_zone_details_show_only_filter_text", "[zone][zone_ui][json]" 
     CHECK( descriptions.front().second == "c:еда,m:железо,q:забивания" );
 }
 
-TEST_CASE( "built_in_zone_names_follow_game_language", "[zone][zone_ui][i18n]" )
-{
-    const auto food = zone_type_id( "LOOT_FOOD" );
-    {
-        const auto language = override_option{"USE_LANG", "ru_RU"};
-        set_language();
-        CHECK( food->name() == "Еда" );
-    }
-    {
-        const auto language = override_option{"USE_LANG", "en_US"};
-        set_language();
-        CHECK( food->name() == "Food" );
-    }
-    set_language();
-}
-
 TEST_CASE( "superzone_template_categories_and_round_trip", "[zone_ui][superzone]" )
 {
     for( const auto &preset : loot_zone_presets() ) {
@@ -157,7 +141,7 @@ TEST_CASE( "superzone_is_fallback_for_unavailable_specialized_zone", "[zone_ui][
     CHECK( mgr.get_near_zone_type_for_item( *hammer, origin, 10 ) == zone_type_id( "LOOT_CUSTOM" ) );
 }
 
-TEST_CASE( "superzone_food_choices_are_independent_and_filter_is_intersection",
+TEST_CASE( "category_storage_uses_categories_without_experimental_text_filter",
            "[zone_ui][superzone]" )
 {
     auto options = loot_options();
@@ -172,7 +156,7 @@ TEST_CASE( "superzone_food_choices_are_independent_and_filter_is_intersection",
                         R"({"superzone":"food","categories":["LOOT_DRINK"],"mark":"this_name_does_not_exist_87263"})" );
     auto filtered_input = JsonIn( filtered );
     options.deserialize( filtered_input.get_object() );
-    CHECK_FALSE( options.matches( *water ) );
+    CHECK( options.matches( *water ) );
 }
 
 TEST_CASE( "zone_details_panel_grows_and_shrinks_with_selected_content", "[zone_ui]" )
@@ -253,8 +237,9 @@ TEST_CASE( "zone_groups_follow_document_order_without_duplicate_types", "[zone_u
     REQUIRE( groups.size() == 17 );
     CHECK( groups.front().id == "food" );
     CHECK( groups[4].id == "technology" );
-    CHECK( groups.back().id == "rules" );
-    for( const auto &id : groups.back().categories ) {
+    CHECK( groups[11].id == "rules" );
+    CHECK( groups[12].id == "fieldwork" );
+    for( const auto &id : groups[11].categories ) {
         CHECK( std::ranges::contains( zone_creation_rules(), id ) );
     }
     auto seen = std::vector<zone_type_id>();
@@ -307,10 +292,10 @@ TEST_CASE( "zone_group_names_and_suggestions_follow_language", "[zone_ui][i18n]"
             russian_groups.push_back( group.id );
         }
         CHECK( russian_groups == english_groups );
-        CHECK( storage.get_zone_name_suggestion() == "Инструменты" );
-        CHECK( zone_selection_name( { zone_type_id( "LOOT_FOOD" ) } ) == "Еда и напитки" );
+        CHECK( storage.get_zone_name_suggestion() == _( "Tools" ) );
+        CHECK( zone_selection_name( { zone_type_id( "LOOT_FOOD" ) } ) == _( "Food and drinks" ) );
         CHECK( zone_selection_name( { zone_type_id( "LOOT_BOOKS" ), zone_type_id( "LOOT_TOOLS" ) } ) ==
-               "Инструменты, Книги и карты" );
+               std::string( _( "Tools" ) ) + ", " + _( "Books and maps" ) );
     }
     set_language();
 }
@@ -357,7 +342,9 @@ TEST_CASE( "zone_group_json_extensions_keep_unassigned_categories_available", "[
     CHECK( std::ranges::count( reordered, zone_type_id( "LOOT_TOOLS" ) ) == 1 );
     CHECK_FALSE( std::ranges::contains( reordered, zone_type_id( "not_installed" ) ) );
     load( R"({"id":"rules","sort_order":-1000})" );
-    CHECK( loot_zone_presets().back().kind == "rules" );
+    const auto rule_group = std::ranges::find( loot_zone_presets(), "rules", &loot_zone_preset::id );
+    const auto activity_group = std::ranges::find( loot_zone_presets(), "activity", &loot_zone_preset::kind );
+    CHECK( rule_group < activity_group );
     reset_loot_zone_groups();
     CHECK( zone_creation_rules().empty() );
     auto english_order = std::vector<zone_type_id>();
@@ -395,6 +382,10 @@ TEST_CASE( "simple_zone_functions_share_storage_area", "[zone_ui]" )
     CHECK( zone_can_share_area( zone_type_id( "NPC_RETREAT" ) ) );
     CHECK_FALSE( zone_can_share_area( zone_type_id( "FARM_PLOT" ) ) );
     CHECK_FALSE( zone_can_share_area( zone_type_id( "CONSTRUCTION_BLUEPRINT" ) ) );
+    CHECK_FALSE( zone_can_share_area( zone_type_id( "CONSTRUCTION_IGNORE" ) ) );
+    CHECK_FALSE( zone_can_share_area( zone_type_id( "CHOP_TREES" ) ) );
+    CHECK_FALSE( zone_can_share_area( zone_type_id( "MINING" ) ) );
+    CHECK_FALSE( zone_can_share_area( zone_type_id( "FISHING_SPOT" ) ) );
     CHECK_FALSE( zone_can_share_area( zone_type_id( "LOOT_CUSTOM" ) ) );
     CHECK( std::ranges::contains( zone_creation_rules(), zone_type_id( "AUTO_EAT" ) ) );
     clear_avatar();
@@ -871,4 +862,71 @@ TEST_CASE("sorting_cannot_cross_door_blocked_by_furniture", "[zone_ui][zone_sort
     }));
     here.ter_set(gate, ter_id("t_door_o"));
     REQUIRE(here.impassable(gate));
+}
+
+TEST_CASE("edited_category_storage_sorts_after_reload", "[zone_ui][zone_sorting][json]") {
+    auto fixture = sorting_fixture();
+    auto& manager = zone_manager::get_manager();
+    auto& here = get_map();
+    const auto source = get_avatar().abs_pos();
+    const auto destination = source + tripoint_rel_ms(3, 0, 0);
+    fixture.add(source, zone_type_id("LOOT_UNSORTED"));
+    auto options = make_shared_fast<loot_options>();
+    options->set_preset({.id = "categories", .categories = {zone_type_id("LOOT_BOOKS")}});
+    manager.add("Storage", zone_type_id("LOOT_CUSTOM"), your_fac, false, true,
+                destination, destination, options);
+    options->set_preset({.id = "categories", .categories = {zone_type_id("LOOT_WORKSHOP_TOOLS")}});
+    auto saved = std::ostringstream();
+    auto json = JsonOut(saved);
+    manager.serialize(json);
+    auto stream = std::istringstream(saved.str());
+    auto input = JsonIn(stream);
+    manager.deserialize(input);
+    manager.cache_data();
+    here.add_item(abs_to_bub(source), item::spawn("hammer"));
+    here.add_item(abs_to_bub(source), item::spawn("novel_pulp"));
+    fixture.sort();
+    CHECK(std::ranges::any_of(here.i_at(abs_to_bub(destination)), [](const auto& it) {
+        return it->typeId() == itype_id("hammer");
+    }));
+    CHECK(std::ranges::any_of(here.i_at(abs_to_bub(source)), [](const auto& it) {
+        return it->typeId() == itype_id("novel_pulp");
+    }));
+}
+
+TEST_CASE("manual_filter_edit_and_favorite_rule_are_independent", "[zone_ui][zone_sorting][json]") {
+    auto fixture = sorting_fixture();
+    auto& here = get_map();
+    auto& manager = zone_manager::get_manager();
+    const auto source = get_avatar().abs_pos();
+    const auto other_source = source + tripoint_rel_ms(1, 0, 0);
+    const auto destination = source + tripoint_rel_ms(4, 0, 0);
+    fixture.add(source, zone_type_id("LOOT_UNSORTED"));
+    fixture.add(other_source, zone_type_id("LOOT_UNSORTED"));
+    fixture.add(source, zone_type_id("LOOT_IGNORE_FAVORITES"));
+    auto options = make_shared_fast<loot_options>();
+    auto initial = std::istringstream(R"({"mark":"rock"})");
+    auto initial_input = JsonIn(initial);
+    options->deserialize(initial_input.get_object());
+    manager.add("Manual", zone_type_id("LOOT_CUSTOM"), your_fac, false, true,
+                destination, destination, options);
+    auto edited = std::istringstream(R"({"mark":"hammer"})");
+    auto edited_input = JsonIn(edited);
+    options->deserialize(edited_input.get_object());
+    auto saved = std::ostringstream();
+    auto json = JsonOut(saved);
+    manager.serialize(json);
+    auto stream = std::istringstream(saved.str());
+    auto input = JsonIn(stream);
+    manager.deserialize(input);
+    manager.cache_data();
+    for (const auto point : {source, other_source}) {
+        auto hammer = item::spawn("hammer");
+        hammer->is_favorite = true;
+        here.add_item(abs_to_bub(point), std::move(hammer));
+    }
+    fixture.sort();
+    CHECK(here.i_at(abs_to_bub(source)).size() == 1);
+    CHECK(here.i_at(abs_to_bub(other_source)).empty());
+    CHECK(here.i_at(abs_to_bub(destination)).size() == 1);
 }

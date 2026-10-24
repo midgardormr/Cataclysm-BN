@@ -145,7 +145,7 @@
     "type": "LOOT_ZONE_GROUP",
     "id": "rules",
     "name": "Area rules",
-    "sort_order": 160,
+    "sort_order": 105,
     "kind": "rules",
     "categories": [ "LOOT_UNSORTED", "LOOT_DUMP", "LOOT_IGNORE", "LOOT_IGNORE_FAVORITES", "NO_AUTO_PICKUP", "NO_NPC_PICKUP" ]
   }

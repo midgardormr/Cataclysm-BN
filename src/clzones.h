@@ -209,7 +209,7 @@ class blueprint_options : public zone_options
 class loot_options : public zone_options
 {
     private:
-        // Additional text filter; category selections are stored independently of language.
+        // Manual text filter; category selections use language-independent zone IDs.
         std::string mark;
         std::string superzone;
         std::vector<zone_type_id> categories;
