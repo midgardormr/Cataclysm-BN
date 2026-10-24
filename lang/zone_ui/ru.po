@@ -311,8 +311,8 @@ msgstr "PgUp/PgDn: прокрутка"
 msgid "Toggle the whole group; individual categories can be changed below."
 msgstr "Выберите всю группу или отметьте отдельные категории ниже."
 
-msgid "Create zone: categories and area rules"
-msgstr "Создание зоны: категории и правила"
+msgid "Zone Manager"
+msgstr "Менеджер зон"
 
 msgid "Selected categories share one storage zone. Area rules are created separately on the same rectangle. Specialized storage takes priority."
 msgstr "Выбранные категории образуют один склад. Правила создаются отдельными зонами в той же области. Специализированные склады имеют приоритет."
@@ -385,3 +385,6 @@ msgstr "Правила зоны:"
 
 msgid "Filter:"
 msgstr "Фильтр:"
+
+msgid "Select functions for this area. Entries requiring setup open separately."
+msgstr "Выберите действия для этой области. Зоны с дополнительными настройками открываются отдельно."

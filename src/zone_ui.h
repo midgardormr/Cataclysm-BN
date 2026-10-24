@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "output.h"
@@ -72,4 +73,32 @@ inline auto wrap_zone_filter( const std::string &text, const int width ) -> std:
         lines.push_back( line );
     }
     return lines;
+}
+
+/// Byte offsets of recognized filter prefixes; render over the plain text without injecting tags.
+inline auto zone_filter_prefixes( const std::string &line ) -> std::vector<size_t>
+{
+    auto prefixes = std::vector<size_t>();
+    auto start = size_t( 0 );
+    while( start < line.size() ) {
+        const auto end = line.find_first_of( ",;", start );
+        auto colon = line.find( ':', start );
+        while( colon != std::string::npos && ( end == std::string::npos || colon < end ) ) {
+            if( colon > start &&
+                std::string_view( "cmqbdnk" ).find( line[colon - 1] ) != std::string_view::npos ) {
+                prefixes.push_back( colon - 1 );
+                if( line[colon - 1] == 'b' ) {
+                    start = colon + 1;
+                    colon = line.find( ':', start );
+                    continue;
+                }
+            }
+            break;
+        }
+        if( end == std::string::npos ) {
+            break;
+        }
+        start = end + 1;
+    }
+    return prefixes;
 }

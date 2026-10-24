@@ -106,16 +106,7 @@ class zone_options
         virtual void deserialize( const JsonObject & ) {}
 };
 
-// mark option interface
-class mark_option
-{
-    public:
-        virtual ~mark_option() = default;
-
-        virtual std::string get_mark() const = 0;
-};
-
-class plot_options : public zone_options, public mark_option
+class plot_options : public zone_options
 {
     private:
         itype_id mark;
@@ -130,9 +121,6 @@ class plot_options : public zone_options, public mark_option
         query_seed_result query_seed();
 
     public:
-        std::string get_mark() const override {
-            return mark.str();
-        }
         itype_id get_seed() const {
             return seed;
         }
@@ -152,7 +140,7 @@ class plot_options : public zone_options, public mark_option
         void deserialize( const JsonObject &jo_zone ) override;
 };
 
-class blueprint_options : public zone_options, public mark_option
+class blueprint_options : public zone_options
 {
     public:
         enum class blueprint_layout {
@@ -184,9 +172,6 @@ class blueprint_options : public zone_options, public mark_option
         auto query_layout() -> query_layout_result;
 
     public:
-        std::string get_mark() const override {
-            return mark;
-        }
         construction_id get_index() const {
             return index;
         }
@@ -220,7 +205,7 @@ class blueprint_options : public zone_options, public mark_option
         void deserialize( const JsonObject &jo_zone ) override;
 };
 
-class loot_options : public zone_options, public mark_option
+class loot_options : public zone_options
 {
     private:
         // Additional text filter; category selections are stored independently of language.
@@ -241,9 +226,6 @@ class loot_options : public zone_options, public mark_option
         auto set_preset( const loot_zone_preset &preset ) -> void;
         auto is_superzone() const -> bool { return !superzone.empty(); }
         auto matches( const item &candidate ) const -> bool;
-        std::string get_mark() const override {
-            return mark;
-        }
 
         bool has_options() const override {
             return true;

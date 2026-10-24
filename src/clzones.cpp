@@ -320,13 +320,18 @@ auto loot_options::matches( const item &candidate ) const -> bool
     return is_superzone() && mark.empty() ? true : item_filter_from_string( mark )( candidate );
 }
 
+auto zone_can_share_area( const zone_type_id &type ) -> bool
+{
+    return type.is_valid() && !zone_options::create( type )->has_options();
+}
+
 auto zone_creation_rules() -> std::vector<zone_type_id>
 {
     auto rules = std::vector<zone_type_id>();
     for( const auto &group : loot_zone_presets() ) {
-        if( group.kind == "rules" ) {
+        if( group.kind != "storage" ) {
             for( const auto &id : group.categories ) {
-                if( id.is_valid() && !std::ranges::contains( rules, id ) ) {
+                if( zone_can_share_area( id ) && !std::ranges::contains( rules, id ) ) {
                     rules.push_back( id );
                 }
             }
@@ -390,7 +395,7 @@ auto query_zone_creation( const zone_creation_selection &initial,
         std::string description;
         std::vector<zone_type_id> members;
         bool rule = false;
-        bool separate = false;
+        nc_color color = c_light_gray;
         bool single_type = false;
     };
     auto rows = std::vector<checklist_row>();
@@ -423,15 +428,18 @@ auto query_zone_creation( const zone_creation_selection &initial,
             continue;
         }
         rows.push_back( { .label = preset.title.translated(),
-                          .description = _( "Toggle the whole group; individual categories can be changed below." ),
+                          .description = preset.kind == "storage" ?
+                                         _( "Toggle the whole group; individual categories can be changed below." ) :
+                                         _( "Select functions for this area. Entries requiring setup open separately." ),
                           .members = preset.kind == "activity" ? std::vector<zone_type_id>() : members,
-                          .rule = preset.kind != "storage", .separate = preset.kind == "rules" } );
+                          .rule = preset.kind != "storage",
+                          .color = preset.kind == "storage" ? c_light_cyan : c_light_gray } );
         if( members.size() == 1 && preset.kind != "activity" ) {
             continue;
         }
         for( const auto &id : members ) {
             rows.push_back( { .label = "  " + id->name(), .description = id->desc(), .members = { id }, .rule = preset.kind != "storage",
-                              .single_type = preset.kind == "activity" } );
+                              .single_type = preset.kind != "storage" && !zone_can_share_area( id ) } );
         }
     }
     append_remaining();
@@ -439,7 +447,7 @@ auto query_zone_creation( const zone_creation_selection &initial,
     auto cursor = 0;
     while( true ) {
         auto menu = uilist();
-        menu.text = _( "Create zone: categories and area rules" );
+        menu.text = _( "Zone Manager" );
         menu.desc_enabled = true;
         menu.addentry_desc( 0, true, MENU_AUTOASSIGN, _( "Confirm selection" ),
                             _( "Selected categories share one storage zone. Area rules are created separately on the same rectangle. Specialized storage takes priority." ) );
@@ -456,9 +464,6 @@ auto query_zone_creation( const zone_creation_selection &initial,
         const auto offset = categories_only ? 2 : 4;
         for( auto i = 0; i < static_cast<int>( rows.size() ); ++i ) {
             const auto &row = rows[i];
-            if( row.separate ) {
-                menu.addentry( -1, false, 0, " " );
-            }
             const auto &checked = row.rule ? selection.rules : selection.categories;
             const auto count = std::ranges::count_if( row.members, [&]( const auto & id ) {
                 return std::ranges::contains( checked, id );
@@ -467,9 +472,7 @@ auto query_zone_creation( const zone_creation_selection &initial,
             menu.addentry_desc( i + offset, !row.members.empty(), MENU_AUTOASSIGN,
                                 row.single_type || row.members.empty() ? row.label :
                                 string_format( "[%s] %s", mark, row.label ), row.description );
-            if( row.members.size() > 1 || row.members.empty() ) {
-                menu.entries.back().text_color = c_light_cyan;
-            }
+            menu.entries.back().text_color = row.color;
         }
         menu.selected = cursor;
         menu.query();
@@ -486,16 +489,19 @@ auto query_zone_creation( const zone_creation_selection &initial,
             selection.categories.clear();
             selection.rules.clear();
         } else if( !categories_only && menu.ret == 2 ) {
-            return zone_creation_selection{ .single_type = zone_LOOT_CUSTOM };
+            selection.single_type = zone_LOOT_CUSTOM;
+            return selection;
         } else if( !categories_only && menu.ret == 3 ) {
             const auto type = zone_manager::get_manager().query_type();
             if( type ) {
-                return zone_creation_selection{ .single_type = type };
+                selection.single_type = type;
+                return selection;
             }
         } else {
             const auto &row = rows.at( menu.ret - offset );
             if( row.single_type ) {
-                return zone_creation_selection{ .single_type = row.members.front() };
+                selection.single_type = row.members.front();
+                return selection;
             }
             toggle_zone_categories( row.rule ? selection.rules : selection.categories, row.members );
         }
@@ -833,15 +839,18 @@ auto blueprint_options::query_layout() -> query_layout_result
 
 loot_options::query_loot_result loot_options::query_loot()
 {
-    // Show the filter syntax inside the popup itself, so it stays visible while typing.
-    string_input_popup()
-    .title( _( "Filter:" ) )
-    .description( item_filter_rules_text( item_filter_type::FILTER ) )
-    .width( 55 )
-    .identifier( "item_filter" )
-    .max_length( 256 )
-    .edit( mark );
-    return changed;
+    auto popup = string_input_popup();
+    const auto previous = mark;
+    popup.title( _( "Filter:" ) )
+         .description( item_filter_rules_text( item_filter_type::FILTER ) )
+         .width( 55 )
+         .identifier( "item_filter" )
+         .max_length( 256 )
+         .edit( mark );
+    if( !popup.confirmed() ) {
+        return canceled;
+    }
+    return mark == previous ? successful : changed;
 }
 
 plot_options::query_seed_result plot_options::query_seed()

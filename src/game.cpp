@@ -9511,7 +9511,7 @@ auto zones_manager_draw_borders( const catacurses::window &w_border,
     mvwputch( w_border, point( width - 1, TERMY - iInfoHeight - 1 ), c_light_gray,
               LINE_XOXX ); // -|
 
-    mvwprintz( w_border, point( 2, 0 ), c_white, _( "Zones manager" ) );
+    mvwprintz( w_border, point( 2, 0 ), c_white, _( "Zone Manager" ) );
     wnoutrefresh( w_border );
 
     for( int j = 0; j < iInfoHeight - 1; ++j ) {
@@ -9547,6 +9547,7 @@ void game::zones_manager()
     auto zone_options_height = 6;
     auto details_lines = std::vector<std::string>();
     auto details_headings = std::set<int>();
+    auto details_filters = std::set<int>();
     auto details_offset = 0;
     const zone_data *details_zone = nullptr;
 
@@ -9641,6 +9642,7 @@ void game::zones_manager()
     auto refresh_details = [&]() {
         details_lines.clear();
         details_headings.clear();
+        details_filters.clear();
         const auto zone = zone_cnt > 0 ? &zones[active_index].get() : nullptr;
         if( zone != details_zone ) {
             details_offset = 0;
@@ -9669,8 +9671,15 @@ void game::zones_manager()
                         heading( _( "Filter:" ) );
                     }
                 }
+                auto description_index = 0;
                 for( const auto &desc : zone->get_options().get_descriptions() ) {
                     const auto lines = wrap_zone_filter( desc.first + desc.second, width - 4 );
+                    if( loot && ( !category_storage || description_index > 0 ) ) {
+                        for( auto row = details_lines.size(); row < details_lines.size() + lines.size(); ++row ) {
+                            details_filters.insert( row );
+                        }
+                    }
+                    ++description_index;
                     details_lines.insert( details_lines.end(), lines.begin(), lines.end() );
                 }
             }
@@ -9715,6 +9724,13 @@ void game::zones_manager()
             }
             mvwprintz( w_zones_options, point( 1, y ), details_headings.contains( index ) ? c_light_gray : c_white,
                        "%s", details_lines[index] );
+            if( details_filters.contains( index ) ) {
+                for( const auto byte : zone_filter_prefixes( details_lines[index] ) ) {
+                    const auto x = 1 + utf8_width( details_lines[index].substr( 0, byte ) );
+                    mvwprintz( w_zones_options, point( x, y ), c_yellow, "%s",
+                               details_lines[index].substr( byte, 2 ) );
+                }
+            }
         }
         if( overflow ) {
             mvwprintz( w_zones_options, point( 1, visible ), c_light_cyan, "%s", _( "PgUp/PgDn: details" ) );
@@ -9865,11 +9881,14 @@ void game::zones_manager()
     zones_manager_open = true;
     do {
         if( action == "ADD_ZONE" ) {
-            do { // not a loop, just for quick bailing out if canceled
-                const auto selection = query_zone_creation();
+            auto previous_selection = zone_creation_selection();
+            while( true ) {
+                const auto selection = query_zone_creation( previous_selection );
                 if( !selection ) {
                     break;
                 }
+                previous_selection = *selection;
+                previous_selection.single_type.reset();
                 struct pending_zone {
                     zone_type_id type;
                     std::string name;
@@ -9884,7 +9903,7 @@ void game::zones_manager()
                         storage->set_preset( { .id = "categories", .categories = selection->categories } );
                         options = storage;
                     } else if( !options->query_at_creation() ) {
-                        break;
+                        continue;
                     }
                     auto default_name = options->get_zone_name_suggestion();
                     if( default_name.empty() ) {
@@ -9919,7 +9938,8 @@ void game::zones_manager()
                 active_index = zone_cnt - 1;
 
                 stuff_changed = true;
-            } while( false );
+                break;
+            }
         } else if( action == "PAGE_UP" ) {
             details_offset -= std::max( 1, zone_options_height - 2 );
         } else if( action == "PAGE_DOWN" ) {

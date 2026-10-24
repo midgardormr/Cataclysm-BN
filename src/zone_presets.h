@@ -37,3 +37,6 @@ auto load_loot_zone_group( const JsonObject &jo ) -> void;
 auto reset_loot_zone_groups() -> void;
 auto item_category_zone_types() -> std::vector<zone_type_id>;
 auto zone_selection_name( const std::vector<zone_type_id> &categories ) -> std::string;
+
+/// Whether a native functional zone can be added without a separate options dialog.
+auto zone_can_share_area( const zone_type_id &type ) -> bool;

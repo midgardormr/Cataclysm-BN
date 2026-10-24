@@ -11,8 +11,8 @@ with `str` and `ctxt`.
 
 The creation checklist offers groups and individual storage categories. Selected
 categories create one `LOOT_CUSTOM` zone. Area rules create separate native zones
-on the same rectangle. Construction, farming, vehicle and other activity zones
-retain their individual setup flow. The manual custom filter remains a separate
+on the same rectangle. Native functions without extra options can be checked alongside storage;
+functions requiring a seed or construction project retain individual setup. The manual custom filter remains a separate
 text-only option using the original item filter syntax.
 
 Custom options save `superzone` (selection mode), `categories` (stable zone IDs),
@@ -56,8 +56,7 @@ translation object), extracted for translation alongside other JSON names.
 Changing the game language changes group and type labels. Instance names already
 saved by the player remain literal editable names.
 
-`kind` is `storage` (combined category checkbox), `activity` (individual native
-setup), or `rules` (separate native zones on the chosen rectangle). Storage groups
+`kind` is `storage` (combined category checkbox), `activity` (native functions, with individual setup when needed), or `rules` (separate native zones on the chosen rectangle). Storage groups
 come first, activity groups next, rules last. Within each section `sort_order`
 controls the order, with `id` as a deterministic tie breaker. Members follow the
 order of `categories`. Duplicate members appear only in their first group;
@@ -86,3 +85,10 @@ this UI does not invent sorting behavior for categories without a destination.
 Suggested names use the selected group names, in checklist order; mixed groups
 are joined with commas. Partial selections still use their parent group name.
 Unknown/unassigned storage types use their translated type name instead.
+
+
+The Zone Manager returns to its creation checklist if the manual filter dialog
+is canceled; pending checkboxes are preserved and no name/area dialog opens.
+Recognized filter prefixes (`c:`, `m:`, `q:`, etc.) are highlighted only for display.
+The raw filter remains unchanged. Selected zones use the normal color overlay;
+zone option text is never interpreted as a tile ID.

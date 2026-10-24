@@ -173,3 +173,6 @@ rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
 - In the zone sidebar, the list border owns the horizontal divider; the details window starts on the first row of the lower border window, which has no horizontal line at row zero. Count two footer border rows to avoid a blank row above details.
 
 - In multi-file edit scripts, use separate path variables per file and verify header/source boundaries before building; do not reuse a target path after editing another file.
+
+- `string_input_popup::edit` preserves the value on Escape but does not report cancellation; retain the popup object and check `confirmed()` before advancing a multi-step creation flow.
+- A zone's mark text may be a filter rather than an item/tile ID; never pass arbitrary zone option text to tile rendering.

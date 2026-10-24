@@ -246,7 +246,9 @@ TEST_CASE( "zone_groups_follow_document_order_without_duplicate_types", "[zone_u
     CHECK( groups.front().id == "food" );
     CHECK( groups[4].id == "technology" );
     CHECK( groups.back().id == "rules" );
-    CHECK( groups.back().categories == zone_creation_rules() );
+    for( const auto &id : groups.back().categories ) {
+        CHECK( std::ranges::contains( zone_creation_rules(), id ) );
+    }
     auto seen = std::vector<zone_type_id>();
     for( const auto &group : groups ) {
         for( const auto &id : group.categories ) {
@@ -338,4 +340,65 @@ TEST_CASE( "zone_group_json_extensions_keep_unassigned_categories_available", "[
     CHECK( loot_zone_presets().back().kind == "rules" );
     reset_loot_zone_groups();
     CHECK( zone_creation_rules().empty() );
+}
+
+TEST_CASE( "zone_filter_prefix_highlights_follow_filter_syntax", "[zone_ui]" )
+{
+    const auto text = std::string( "c:еда,-m:iron,b:q:cut;k:survival,http:c:literal" );
+    auto marked = std::vector<std::string>();
+    for( const auto byte : zone_filter_prefixes( text ) ) {
+        marked.push_back( text.substr( byte, 2 ) );
+    }
+    CHECK( marked == std::vector<std::string> { "c:", "m:", "b:", "q:", "k:" } );
+    CHECK( zone_filter_prefixes( "ordinary text without a prefix" ).empty() );
+    CHECK( zone_filter_prefixes( "<color_red>text</color>,m:wood" ) ==
+           std::vector<size_t> { 24 } );
+}
+
+TEST_CASE( "simple_zone_functions_share_storage_area", "[zone_ui]" )
+{
+    CHECK( zone_can_share_area( zone_type_id( "AUTO_EAT" ) ) );
+    CHECK( zone_can_share_area( zone_type_id( "AUTO_DRINK" ) ) );
+    CHECK( zone_can_share_area( zone_type_id( "SOURCE_FIREWOOD" ) ) );
+    CHECK( zone_can_share_area( zone_type_id( "NPC_RETREAT" ) ) );
+    CHECK_FALSE( zone_can_share_area( zone_type_id( "FARM_PLOT" ) ) );
+    CHECK_FALSE( zone_can_share_area( zone_type_id( "CONSTRUCTION_BLUEPRINT" ) ) );
+    CHECK_FALSE( zone_can_share_area( zone_type_id( "LOOT_CUSTOM" ) ) );
+    CHECK( std::ranges::contains( zone_creation_rules(), zone_type_id( "AUTO_EAT" ) ) );
+    clear_avatar();
+    clear_map();
+    auto &mgr = zone_manager::get_manager();
+    auto saved = std::ostringstream();
+    auto saved_out = JsonOut( saved );
+    mgr.serialize( saved_out );
+    const auto restore = on_out_of_scope( [&]() {
+        auto stream = std::istringstream( saved.str() );
+        auto input = JsonIn( stream );
+        mgr.deserialize( input );
+        mgr.cache_data();
+    } );
+    auto empty = std::istringstream( "[]" );
+    auto input = JsonIn( empty );
+    mgr.deserialize( input );
+    mgr.cache_data();
+    const auto origin = get_avatar().abs_pos();
+    const auto spot = origin + tripoint_rel_ms( 1, 0, 0 );
+    auto storage = make_shared_fast<loot_options>();
+    storage->set_preset( { .id = "categories", .categories = { zone_type_id( "LOOT_PFOOD" ) } } );
+    mgr.add( "Perishable food", zone_type_id( "LOOT_CUSTOM" ), your_fac, false, true, spot, spot,
+             storage );
+    mgr.add( "Auto eat", zone_type_id( "AUTO_EAT" ), your_fac, false, true, spot, spot );
+    const auto apple = item::spawn_temporary( "apple" );
+    REQUIRE( storage->matches( *apple ) );
+    CHECK( mgr.get_near_zone_type_for_item( *apple, origin, 10 ) == zone_type_id( "LOOT_CUSTOM" ) );
+    CHECK( mgr.get_near( zone_type_id( "AUTO_EAT" ), origin, 10 ).contains( spot ) );
+    auto out = std::ostringstream();
+    auto json = JsonOut( out );
+    mgr.serialize( json );
+    auto round_trip = std::istringstream( out.str() );
+    auto restored = JsonIn( round_trip );
+    mgr.deserialize( restored );
+    mgr.cache_data();
+    CHECK( mgr.get_near_zone_type_for_item( *apple, origin, 10 ) == zone_type_id( "LOOT_CUSTOM" ) );
+    CHECK( mgr.get_near( zone_type_id( "AUTO_EAT" ), origin, 10 ).contains( spot ) );
 }
