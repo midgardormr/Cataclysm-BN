@@ -5,7 +5,6 @@
 #include "string_utils.h"
 #include "hsv_color.h"
 #include "sdl_utils.h"
-#include "zone_icons.h"
 
 #define dbg(x) DebugLogFL((x),DC::SDL)
 
@@ -334,19 +333,11 @@ SDL_Texture_Ptr CachedTTFFont::create_glyph( const SDL_Renderer_Ptr &renderer,
         const std::string &ch,
         const int color )
 {
-    // Rasterize zone icons slightly smaller, keeping their two-cell advance.
-    // Restore the font size before caching or rendering any ordinary text.
-    const auto original_size = TTF_GetFontSize( font.get() );
-    const auto is_zone_icon = std::ranges::contains( zone_icon_codepoints, UTF8_getch( ch ) );
-    const auto resized = is_zone_icon && TTF_SetFontSize( font.get(), original_size * 0.9f );
     SDL_Surface_Ptr sglyph(
         fontblending
         ? TTF_RenderText_Blended( font.get(), ch.c_str(), 0, windowsPalette[color] )
         : TTF_RenderText_Solid( font.get(), ch.c_str(), 0, windowsPalette[color] )
     );
-    if( resized ) {
-        TTF_SetFontSize( font.get(), original_size );
-    }
     if( !sglyph ) {
         dbg( DL::Error ) << "Failed to create glyph for " << ch << ": " << SDL_GetError();
         return nullptr;

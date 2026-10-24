@@ -8,9 +8,8 @@
 struct loot_zone_preset {
     std::string id;
     std::string title;
-    std::string name;
-    int group;
     std::vector<zone_type_id> categories;
+    bool area_rule = false;
 };
 
 /// Menu templates create ordinary LOOT_CUSTOM zones, not additional zone types.

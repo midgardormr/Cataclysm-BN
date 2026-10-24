@@ -5,7 +5,6 @@
 #include "language.h"
 #include "options_helpers.h"
 #include "zone_ui.h"
-#include "zone_icons.h"
 #include "zone_presets.h"
 #include "item.h"
 #include "item_category.h"
@@ -17,26 +16,6 @@
 
 #include <sstream>
 #include <string>
-
-TEST_CASE( "zone_type_separate_default_name", "[zone][zone_ui][json]" )
-{
-    auto stream = std::istringstream{
-        R"({"id":"zone_ui_test","name":"\ue200\ue201 Type","default_name":"My pantry"})"};
-    auto input = JsonIn{stream};
-    auto zone = zone_type{};
-    zone.load( input.get_object(), "zone_ui_test" );
-    CHECK( zone.name() == "\ue200\ue201 Type" );
-    CHECK( zone.default_name() == "My pantry" );
-}
-
-TEST_CASE( "zone_type_default_name_fallback", "[zone][zone_ui]" )
-{
-    const auto plain = zone_type{"Unsorted", ""};
-    CHECK( plain.default_name() == plain.name() );
-    const auto decorated = zone_type{"\ue200\ue201 Ингредиенты", ""};
-    CHECK( decorated.default_name() == decorated.name() );
-    CHECK( decorated.name() == "\ue200\ue201 Ингредиенты" );
-}
 
 TEST_CASE( "zone_row_keeps_room_for_long_name_and_location", "[zone][zone_ui]" )
 {
@@ -52,33 +31,6 @@ TEST_CASE( "zone_row_keeps_room_for_long_name_and_location", "[zone][zone_ui]" )
     CHECK( wide.name_width > nearby.name_width );
 }
 
-TEST_CASE( "whole_zone_icons_occupy_two_cells", "[zone][zone_ui]" )
-{
-    CHECK( utf8_width( "\U000f04e1" ) == 2 );
-    CHECK( utf8_width( "\U000f0004" ) == 2 );
-    CHECK( utf8_width( "\U000f025b" ) == 2 );
-    CHECK( utf8_width( "\U000f0787" ) == 2 );
-    CHECK( utf8_width( "\U000f1064" ) == 2 );
-    CHECK( utf8_width( "\U000f0a7b" ) == 2 );
-    CHECK( utf8_width( "\U000f11ec" ) == 2 );
-    CHECK( utf8_width( "\U000f14f7" ) == 2 );
-    CHECK( utf8_width( "\U000f0ae2" ) == 2 );
-    CHECK( utf8_width( "\U000f0493" ) == 2 );
-    CHECK( utf8_width( "\U000f032a" ) == 2 );
-    CHECK( utf8_width( "\U000f01a6" ) == 2 );
-    CHECK( utf8_width( "\U000f068c" ) == 2 );
-    CHECK( utf8_width( "\U000f0710" ) == 2 );
-    CHECK( utf8_width( "\U000f08ea" ) == 2 );
-    CHECK( utf8_width( "\U000f010b" ) == 2 );
-    CHECK( utf8_width( "\U000f006a" ) == 2 );
-    CHECK( utf8_width( "\U000f073a" ) == 2 );
-    CHECK( utf8_width( "\ue200\ue201" ) == 2 );
-    CHECK( utf8_width( "\ue23f" ) == 1 );
-    CHECK( utf8_width( "\ue252" ) == 1 );
-    CHECK( utf8_width( "\U000f04e1 Еда" ) == 6 );
-    CHECK( trim_by_length( "\U000f04e1 Еда", 6 ) == "\U000f04e1 Еда" );
-}
-
 TEST_CASE( "custom_zone_details_show_only_filter_text", "[zone][zone_ui][json]" )
 {
     auto stream = std::istringstream{R"({"mark":"c:еда,m:железо,q:забивания"})"};
@@ -92,18 +44,6 @@ TEST_CASE( "custom_zone_details_show_only_filter_text", "[zone][zone_ui][json]" 
     CHECK( descriptions.front().second == "c:еда,m:железо,q:забивания" );
 }
 
-TEST_CASE( "zone_icon_is_separate_from_translated_name", "[zone][zone_ui][json]" )
-{
-    auto stream = std::istringstream{R"({"id":"zone_ui_icon","name":{"str":"Food","ctxt":"zone UI test"},"icon":"󰉛"})"};
-    auto input = JsonIn{stream};
-    auto type = zone_type{};
-    type.load( input.get_object(), "zone_ui_test" );
-    CHECK( type.name() == "Food" );
-    CHECK( type.display_name() == "\U000f025b Food" );
-    CHECK( type.default_name() == type.display_name() );
-    CHECK( utf8_width( type.display_name() ) == 7 );
-}
-
 TEST_CASE( "built_in_zone_names_follow_game_language", "[zone][zone_ui][i18n]" )
 {
     const auto food = zone_type_id( "LOOT_FOOD" );
@@ -111,23 +51,13 @@ TEST_CASE( "built_in_zone_names_follow_game_language", "[zone][zone_ui][i18n]" )
         const auto language = override_option{"USE_LANG", "ru_RU"};
         set_language();
         CHECK( food->name() == "Еда" );
-        CHECK( food->display_name() == "\U000f025b Еда" );
     }
     {
         const auto language = override_option{"USE_LANG", "en_US"};
         set_language();
         CHECK( food->name() == "Food" );
-        CHECK( food->display_name() == "\U000f025b Food" );
     }
     set_language();
-}
-
-TEST_CASE( "nerd_zone_icons_keep_category_order", "[zone][zone_ui]" )
-{
-    CHECK( zone_icon_order( 0xf04e1 ) < zone_icon_order( 0xf025b ) );
-    CHECK( zone_icon_order( 0xf025b ) < zone_icon_order( 0xf0787 ) );
-    CHECK( zone_icon_order( 0xf073a ) < zone_icon_order( 0xf0004 ) );
-    CHECK( zone_icon_order( 'A' ) == 18 );
 }
 
 TEST_CASE( "superzone_template_categories_and_round_trip", "[zone_ui][superzone]" )
@@ -242,6 +172,7 @@ TEST_CASE( "zone_details_panel_grows_and_shrinks_with_selected_content", "[zone_
     const auto short_details = make_zone_panel_layout( 40, 3 );
     const auto long_details = make_zone_panel_layout( 40, 14 );
     CHECK( long_details.details_height == 14 );
+    CHECK( long_details.footer_height == long_details.details_height + 7 );
     CHECK( long_details.list_height < short_details.list_height );
     CHECK( long_details.footer_height + long_details.list_height == 40 );
     CHECK( make_zone_panel_layout( 40, 3 ).details_height == short_details.details_height );
@@ -273,7 +204,7 @@ TEST_CASE( "zone_creation_checklist_mixes_categories_without_rules_becoming_stor
     CHECK( selected == std::vector<zone_type_id> { zone_type_id( "LOOT_BOOKS" ) } );
     toggle_zone_categories( selected, tools->categories );
     auto options = loot_options();
-    options.set_preset( { .id = "categories", .title = "", .name = "", .group = 0,
+    options.set_preset( { .id = "categories", .title = "",
                           .categories = selected } );
     CHECK( options.matches( *item::spawn_temporary( "hammer" ) ) );
     CHECK( options.matches( *item::spawn_temporary( "novel_pulp" ) ) );
@@ -290,4 +221,51 @@ TEST_CASE( "zone_creation_checklist_mixes_categories_without_rules_becoming_stor
     CHECK( restored.matches( *item::spawn_temporary( "hammer" ) ) );
     CHECK( restored.matches( *item::spawn_temporary( "novel_pulp" ) ) );
     CHECK_FALSE( restored.matches( *item::spawn_temporary( "rock" ) ) );
+}
+
+TEST_CASE( "zone_filter_wrap_keeps_conditions_intact", "[zone_ui]" )
+{
+    const auto lines =
+        wrap_zone_filter( "c:еда,c:кухонные инструменты,m:железо", 25 );
+    REQUIRE( lines.size() == 3 );
+    CHECK( lines[0] == "c:еда," );
+    CHECK( lines[1] == "c:кухонные инструменты," );
+    CHECK( lines[2] == "m:железо" );
+    CHECK( wrap_zone_filter( "c:еда,m:железо", 40 ) ==
+           std::vector<std::string> { "c:еда,m:железо" } );
+    for( const auto &line :
+         wrap_zone_filter( "c:сельскохозяйственные инструменты", 12 ) ) {
+        CHECK( utf8_width( line ) <= 12 );
+    }
+}
+
+TEST_CASE( "zone_groups_follow_document_order_without_duplicate_types", "[zone_ui]" )
+{
+    const auto &groups = loot_zone_presets();
+    REQUIRE( groups.size() == 17 );
+    CHECK( groups.front().id == "food" );
+    CHECK( groups[4].id == "technology" );
+    CHECK( groups.back().id == "rules" );
+    CHECK( groups.back().categories == zone_creation_rules() );
+    auto seen = std::vector<zone_type_id>();
+    for( const auto &group : groups ) {
+        for( const auto &id : group.categories ) {
+            CHECK( id.is_valid() );
+            CHECK_FALSE( std::ranges::contains( seen, id ) );
+            seen.push_back( id );
+        }
+    }
+    const auto categories = zone_storage_categories();
+    CHECK( std::ranges::contains( categories, zone_type_id( "LOOT_SCRAP_ELECTRONICS" ) ) );
+    CHECK_FALSE( std::ranges::contains( categories, zone_type_id( "FARM_PLOT" ) ) );
+}
+
+TEST_CASE( "zone_category_continuations_start_at_left_edge", "[zone_ui]" )
+{
+    const auto lines =
+        wrap_zone_filter( "Инструменты мастерской, Инструменты взлома, Книги",
+                          30 );
+    REQUIRE( lines.size() == 2 );
+    CHECK( lines[0] == "Инструменты мастерской," );
+    CHECK( lines[1] == "Инструменты взлома, Книги" );
 }

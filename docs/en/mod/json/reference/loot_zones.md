@@ -2,63 +2,36 @@
 title: Loot zones
 ---
 
-`LOOT_ZONE` definitions describe zone types. Their `name` is displayed in the
-type picker and in the selected zone's details panel. A zone instance has its
-own editable name.
+`LOOT_ZONE` definitions describe zone types. Their translated `name` is used in
+the type picker, selected-zone details, and the suggested name for a new zone.
+Each zone instance has its own editable name. `name` accepts a translation object
+with `str` and `ctxt`.
 
-The optional `default_name` string supplies the translated name suggested when
-creating a zone, independently of its displayed type:
+## Category storage
 
-```json
-{
-  "type": "LOOT_ZONE",
-  "id": "LOOT_FOOD",
-  "name": "Food storage",
-  "default_name": "Pantry",
-  "description": "Destination for comestibles.",
-  "color": "green"
-}
-```
+The creation checklist offers groups and individual storage categories. Selected
+categories create one `LOOT_CUSTOM` zone. Area rules create separate native zones
+on the same rectangle. Construction, farming, vehicle and other activity zones
+retain their individual setup flow. The manual custom filter remains a separate
+text-only option using the original item filter syntax.
 
-When omitted or empty, the translated type name is used, including any icon
-prefix. Existing zone names are preserved. Construction blueprint and seed suggestions retain precedence. Custom loot
-filters use the type default name; the filter expression appears only in details.
+Custom options save `superzone` (selection mode), `categories` (stable zone IDs),
+and `mark` (optional additional filter, combined with categories using AND).
+Legacy custom zones without category fields keep their text-filter behavior.
+The ordered groups are defined in `loot_zone_presets()` in `clzones.cpp`.
+Unknown storage types are retained as individual entries.
 
-The optional `icon` is a non-translatable glyph, drawn before the localized
-name in the type picker, selected type details, and default suggested name.
-`name` accepts a translation object with `str` and `ctxt`. Built-in zone glyphs
-use the bundled Symbols Nerd Font and occupy two terminal cells. See
-`data/font/SymbolsNerdFont-NOTICE.md` for the selected code points and provenance.
+Sorting checks explicit text filters, available specialized zones, category
+storage, then dump zones. Full or blocked specialized storage allows a general
+fallback. Pathfinding and NPC hauling behavior are unchanged.
 
-The prototype's Russian zone-name catalogue is in `lang/zone_ui/ru.po`.
-Compile it with `msgfmt -o lang/zone_ui/ru.mo lang/zone_ui/ru.po`; it is loaded
-alongside the base translation catalogue.
+The details panel shows selected category names directly under "Zone type:".
+Enabled area rules on the same rectangle are listed separately after a blank
+line. Manual custom zones show their type followed by a blank line and the raw
+filter. Comma-separated conditions move intact to the next line whenever they
+fit the panel width. Conditions wider than the entire panel must still wrap.
+Details grow upwards, retaining the bottom shortcuts and at least one list row;
+PgUp/PgDn scroll content that exceeds the available height.
 
-
-## Superzone templates (prototype)
-
-The creation picker inserts cyan, icon-free templates before the food, weapon,
-tool and material groups. Existing ordinary types remain available. Templates
-create `LOOT_CUSTOM`, not new zone IDs. Creation and category editing use a
-checkbox list. At least one category is required; cancelling restores the prior
-selection. An optional additional text filter is combined with categories using
-AND. Selected categories use stable zone IDs and do not depend on translated
-labels; food and drinks are split into perishable/non-perishable groups.
-
-Custom options save `superzone` (template ID), `categories` (selected category
-zone IDs), and the existing `mark` (additional filter). Legacy custom zones
-without these fields keep their text-filter behavior. Templates currently live
-in `loot_zone_presets()` in `clzones.cpp`.
-
-Sorting checks existing explicit text filters, then available specialized
-zones, then a matching superzone, then the dump zone. Destination availability
-includes map bounds, item placement permissions, item count and cargo/tile volume.
-Full or blocked specialized zones therefore allow a general fallback. Pathfinding
-and NPC hauling behavior are not changed by this prototype.
-
-
-The selected-zone details panel measures wrapped type/option lines and grows
-upwards as needed, shrinking the list of zones. Switching to a shorter zone
-shrinks it again; shortcut rows remain anchored to the bottom. If details exceed
-the available screen height, PgUp/PgDn scroll them and a hint is displayed. The
-layout retains at least one visible zone row and does not overlap shortcut rows.
+The prototype's Russian catalogue is `lang/zone_ui/ru.po`, compiled to `ru.mo`
+and loaded alongside the base translation catalogue.

@@ -115,7 +115,7 @@ msgstr "Артефакты"
 
 msgctxt "zone name LOOT_CORPSE"
 msgid "Corpses"
-msgstr "Трупы"
+msgstr "Останки"
 
 msgctxt "zone name LOOT_MAP"
 msgid "Maps"
@@ -171,7 +171,7 @@ msgstr "Кулинарные ингредиенты"
 
 msgctxt "zone name LOOT_SCRAP_METAL"
 msgid "Scrap Metal"
-msgstr "Металлолом"
+msgstr "Металлический лом"
 
 msgctxt "zone name LOOT_SCRAP_ELECTRONICS"
 msgid "Scrap Electronics"
@@ -215,19 +215,19 @@ msgstr "Без автоподбора"
 
 msgctxt "zone name NO_NPC_PICKUP"
 msgid "No NPC Pickup"
-msgstr "НПС без подбора"
+msgstr "Без автоподбора НПС"
 
 msgctxt "zone name NPC_RETREAT"
 msgid "NPC Retreat"
-msgstr "НПС отступление"
+msgstr "Отступление"
 
 msgctxt "zone name NPC_NO_INVESTIGATE"
 msgid "NPC Ignore Sounds"
-msgstr "НПС игнорирование шума"
+msgstr "Игнорирование шумов"
 
 msgctxt "zone name NPC_INVESTIGATE_ONLY"
 msgid "NPC Investigation Area"
-msgstr "НПС зона расследования"
+msgstr "Расследование шумов"
 
 msgctxt "zone name LOOT_DUMP"
 msgid "Dump"
@@ -239,15 +239,15 @@ msgstr "Источник дров"
 
 msgctxt "zone name CONSTRUCTION_BLUEPRINT"
 msgid "Construction Blueprint"
-msgstr "Строительство проект"
+msgstr "Строительство (проект)"
 
 msgctxt "zone name CONSTRUCTION_IGNORE"
 msgid "Construction Ignore"
-msgstr "Строительство игнорировать"
+msgstr "Строительство (игнорировать)"
 
 msgctxt "zone name FARM_PLOT"
 msgid "Farm Plot"
-msgstr "Фермерство участок"
+msgstr "Фермерский участок"
 
 msgctxt "zone name CHOP_TREES"
 msgid "Chop Trees"
@@ -255,23 +255,23 @@ msgstr "Вырубка деревьев"
 
 msgctxt "zone name FISHING_SPOT"
 msgid "Fishing Spot"
-msgstr "Область рыбалки"
+msgstr "Рыбалка"
 
 msgctxt "zone name MINING"
 msgid "Mine Terrain"
-msgstr "Область раскопок"
+msgstr "Раскопки"
 
 msgctxt "zone name VEHICLE_DECONSTRUCT"
 msgid "Vehicle Deconstruct Zone"
-msgstr "Область разборки транспорта"
+msgstr "Разборка транспорта"
 
 msgctxt "zone name VEHICLE_REPAIR"
 msgid "Vehicle Repair Zone"
-msgstr "Область ремонта транспорта"
+msgstr "Ремонт транспорта"
 
 msgctxt "zone name VEHICLE_PATROL"
 msgid "Vehicle Patrol Zone"
-msgstr "Транспортная патрульная область"
+msgstr "Патрульная зона"
 
 msgctxt "zone name AUTO_EAT"
 msgid "Auto Eat"
@@ -281,61 +281,29 @@ msgctxt "zone name AUTO_DRINK"
 msgid "Auto Drink"
 msgstr "Автоматически пить"
 
-
-msgctxt "zone name LOOT_TOOLS"
-msgid "Tools"
-msgstr "Инструменты"
-
 msgid "All tools"
 msgstr "Все инструменты"
-
-msgid "Tools"
-msgstr "Инструменты"
 
 msgid "All food and drinks"
 msgstr "Вся еда и напитки"
 
-msgid "Food and drinks"
-msgstr "Еда и напитки"
-
 msgid "All weapons and ammunition"
 msgstr "Всё оружие и боеприпасы"
-
-msgid "Weapons and ammunition"
-msgstr "Оружие и боеприпасы"
 
 msgid "All materials"
 msgstr "Все материалы"
 
-msgid "Materials"
-msgstr "Материалы"
-
 msgid "Confirm selection"
 msgstr "Подтвердить выбор"
 
-msgid "Select all"
-msgstr "Выбрать всё"
-
 msgid "Clear selection"
 msgstr "Снять все галочки"
-
-msgid "Select at least one category."
-msgstr "Выберите хотя бы одну категорию."
-
-msgid "Edit superzone"
-msgstr "Настройка суперзоны"
 
 msgid "Categories"
 msgstr "Категории"
 
 msgid "Additional filter"
 msgstr "Дополнительный фильтр"
-
-msgid "Categories: "
-msgstr "Категории: "
-
-msgid "Choose categories with checkboxes. Specialized zones take priority."
-msgstr "Отметьте нужные категории галочками. Специализированные зоны имеют приоритет."
 
 msgid "PgUp/PgDn: details"
 msgstr "PgUp/PgDn: прокрутка"
@@ -361,9 +329,6 @@ msgstr "Стандартный тип зоны…"
 msgid "Create any standard zone, including construction, farming and vehicle zones."
 msgstr "Создать стандартную зону, в том числе для строительства, фермерства или транспорта."
 
-msgid "Area rules (separate zones on the same rectangle)"
-msgstr "Правила области (отдельные зоны)"
-
 msgid "Select at least one category or area rule."
 msgstr "Выберите хотя бы одну категорию или правило области."
 
@@ -372,3 +337,45 @@ msgstr "Настройка категорий склада"
 
 msgid "Category storage"
 msgstr "Склад по категориям"
+
+msgid "Technology and spare parts"
+msgstr "Техника и запчасти"
+
+msgid "Household and belongings"
+msgstr "Быт и вещи"
+
+msgid "Medicine and enhancements"
+msgstr "Медицина и улучшения"
+
+msgid "Books and maps"
+msgstr "Книги и карты"
+
+msgid "Special items"
+msgstr "Особые предметы"
+
+msgid "Raw materials and supplies"
+msgstr "Сырьё и припасы"
+
+msgid "Remains"
+msgstr "Останки"
+
+msgid "Field work"
+msgstr "Работы на местности"
+
+msgid "Construction"
+msgstr "Строительство"
+
+msgid "Vehicles"
+msgstr "Транспорт"
+
+msgid "Automatic food and fire"
+msgstr "Автопитание и огонь"
+
+msgid "NPC behavior"
+msgstr "Поведение НПС"
+
+msgid "Area rules"
+msgstr "Правила области"
+
+msgid "Area rules:"
+msgstr "Правила области:"

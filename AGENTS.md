@@ -164,8 +164,10 @@ rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
 
 - Language-switch tests must use IDs from `data/raw/languages.json` (English is `en_US`, not `en`).
 
-- Symbols Nerd Font includes multiple upstream icon sets; preserve the distributed license and attribution table alongside the font, plus the selected set’s upstream license. Do not describe the entire collection as covered solely by its wrapper MIT license.
-
 - JSON literals accept Unicode surrogate-pair escapes or literal UTF-8, not C++ \UXXXXXXXX escapes; keep this distinction in raw-string test fixtures.
 
 - Destination capacity checks need a mutable map reference: map::i_at and map::free_volume are non-const in this branch.
+
+- Test profile contents may change between turns; inspect saved zone arrays before indexing them and create standalone fixtures instead of assuming earlier demo zones still exist.
+
+- In the zone sidebar, the list border owns the horizontal divider; the details window starts on the first row of the lower border window, which has no horizontal line at row zero. Count two footer border rows to avoid a blank row above details.

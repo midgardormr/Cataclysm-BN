@@ -38,8 +38,6 @@ class zone_type
 {
     private:
         translation name_;
-        std::string icon_;
-        std::string default_name_;
         std::string desc_;
         nc_color color_;
     public:
@@ -53,10 +51,6 @@ class zone_type
             desc_( desc ), color_( color ) {}
 
         std::string name() const;
-        /// Localized type label with its optional icon.
-        auto display_name() const -> std::string;
-        /// Suggested name for a new zone, independent of its displayed type.
-        auto default_name() const -> std::string;
         std::string desc() const;
         auto color() const -> nc_color;
 
@@ -473,7 +467,7 @@ class zone_manager
         const zone_data *get_bottom_zone( const tripoint_abs_ms &where,
                                           const faction_id &fac = your_fac ) const;
         std::optional<std::string> query_name( const std::string &default_name = "" ) const;
-        std::optional<zone_type_id> query_type( loot_options *preset = nullptr ) const;
+        std::optional<zone_type_id> query_type() const;
         void swap( zone_data &a, zone_data &b );
         void rotate_zones( map &target_map, int turns );
         // list of tripoints of zones that are loot zones only

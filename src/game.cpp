@@ -9585,7 +9585,7 @@ void game::zones_manager()
         w_zones_info_border = catacurses::newwin( zone_ui_height, width,
             point( offsetX, w_zone_height ) );
         w_zones_options = catacurses::newwin( zone_options_height, width - 2,
-                                              point( offsetX + 1, w_zone_height + 1 ) );
+                                              point( offsetX + 1, w_zone_height ) );
 
         ui.position( point( offsetX, 0 ), point( width, TERMY ) );
     } );
@@ -9652,12 +9652,38 @@ void game::zones_manager()
                 details_lines.insert( details_lines.end(), lines.begin(), lines.end() );
             };
             append( _( "Zone type:" ) );
-            append( mgr.get_name_from_type( zone->get_type() ) );
+            const auto loot = dynamic_cast<const loot_options *>( &zone->get_options() );
+            const auto category_storage = loot && loot->is_superzone();
+            if( !category_storage ) {
+                append( mgr.get_name_from_type( zone->get_type() ) );
+            }
             details_type_rows = details_lines.size();
             if( zone->has_options() ) {
-                details_lines.emplace_back();
+                if( !category_storage ) {
+                    details_lines.emplace_back();
+                }
                 for( const auto &desc : zone->get_options().get_descriptions() ) {
-                    append( desc.first + desc.second );
+                    const auto lines = wrap_zone_filter( desc.first + desc.second, width - 4 );
+                    details_lines.insert( details_lines.end(), lines.begin(), lines.end() );
+                }
+            }
+            if( category_storage ) {
+                const auto rules = zone_creation_rules();
+                auto first = true;
+                for( const auto &ref : mgr.get_zones() ) {
+                    const auto &other = ref.get();
+                    if( other.get_enabled() && other.get_faction() == zone->get_faction() &&
+                        other.get_dimension() == zone->get_dimension() &&
+                        other.get_start_point() == zone->get_start_point() &&
+                        other.get_end_point() == zone->get_end_point() &&
+                        std::ranges::contains( rules, other.get_type() ) ) {
+                        if( first ) {
+                            details_lines.emplace_back();
+                            append( _( "Area rules:" ) );
+                            first = false;
+                        }
+                        append( mgr.get_name_from_type( other.get_type() ) );
+                    }
                 }
             }
         }
@@ -9848,15 +9874,14 @@ void game::zones_manager()
                     auto options = zone_options::create( id );
                     if( !selection->single_type ) {
                         auto storage = make_shared_fast<loot_options>();
-                        storage->set_preset( { .id = "categories", .title = "", .name = "",
-                                              .group = 0, .categories = selection->categories } );
+                        storage->set_preset( { .id = "categories", .title = "", .categories = selection->categories } );
                         options = storage;
                     } else if( !options->query_at_creation() ) {
                         break;
                     }
                     auto default_name = options->get_zone_name_suggestion();
                     if( default_name.empty() ) {
-                        default_name = id->default_name();
+                        default_name = id->name();
                     }
                     const auto name = mgr.query_name( default_name );
                     if( !name ) {
@@ -9865,7 +9890,7 @@ void game::zones_manager()
                     pending.push_back( { .type = id, .name = *name, .options = options } );
                 }
                 for( const auto &rule : selection->rules ) {
-                    pending.push_back( { .type = rule, .name = rule->default_name(),
+                    pending.push_back( { .type = rule, .name = rule->name(),
                                          .options = zone_options::create( rule ) } );
                 }
                 if( pending.empty() ) {
