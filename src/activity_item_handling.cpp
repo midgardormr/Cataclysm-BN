@@ -1,3 +1,4 @@
+#include "zone_sorting.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h" // IWYU pragma: associated
 #include "avatar.h"
@@ -2579,8 +2580,8 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
 
         // the boolean in this pair being true indicates the item is from a vehicle storage space
         auto items = std::vector<std::pair<item *, bool>>();
-        vehicle *src_veh, *dest_veh;
-        int src_part, dest_part;
+        vehicle *src_veh;
+        int src_part;
 
         //Check source for cargo part
         //map_stack and vehicle_stack are different types but inherit from item_stack
@@ -2623,55 +2624,22 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
                 continue;
             }
 
-            const zone_type_id id = mgr.get_near_zone_type_for_item( thisitem, abspos,
-                                    ACTIVITY_SEARCH_DISTANCE );
-
-            // checks whether the item is already on correct loot zone or not
-            // if it is, we can skip such item, if not we move the item to correct pile
-            // think empty bag on food pile, after you ate the content
-            if( mgr.has( id, src ) ) {
+            const auto dest_set = zone_sorting_destinations( thisitem, p, ACTIVITY_SEARCH_DISTANCE );
+            // A custom zone at the source is correct only when its filter accepts this item.
+            if( dest_set.contains( src ) ) {
                 continue;
             }
 
-            const std::unordered_set<tripoint_abs_ms> &dest_set = mgr.get_near( id, abspos,
-                    ACTIVITY_SEARCH_DISTANCE,
-                    &thisitem );
             for( const auto &dest : dest_set ) {
                 const auto dest_loc = abs_to_bub( dest );
 
-                //Check destination for cargo part
-                if( const std::optional<vpart_reference> vp = here.veh_at( dest_loc ).part_with_feature( "CARGO",
-                        false ) ) {
-                    dest_veh = &vp->vehicle();
-                    dest_part = vp->part_index();
-                } else {
-                    dest_veh = nullptr;
-                    dest_part = -1;
-                }
+                move_item( p, thisitem, thisitem.count(), src_loc, dest_loc );
 
-                // skip tiles with inaccessible furniture, like filled charcoal kiln
-                if( !here.can_put_items_ter_furn( dest_loc ) ||
-                    static_cast<int>( here.i_at( dest_loc ).size() ) >= MAX_ITEM_IN_SQUARE ) {
-                    continue;
+                // moved item away from source so decrement
+                if( num_processed > 0 ) {
+                    --num_processed;
                 }
-
-                units::volume free_space;
-                // if there's a vehicle with space do not check the tile beneath
-                if( dest_veh ) {
-                    free_space = dest_veh->free_volume( dest_part );
-                } else {
-                    free_space = here.free_volume( dest_loc );
-                }
-                // check free space at destination
-                if( free_space >= thisitem.volume() ) {
-                    move_item( p, thisitem, thisitem.count(), src_loc, dest_loc );
-
-                    // moved item away from source so decrement
-                    if( num_processed > 0 ) {
-                        --num_processed;
-                    }
-                    break;
-                }
+                break;
             }
             if( p.moves <= 0 ) {
                 return;

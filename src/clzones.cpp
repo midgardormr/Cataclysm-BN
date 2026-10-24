@@ -1,6 +1,8 @@
 #include "clzones.h"
 
 #include "zone_presets.h"
+#include "zone_sorting.h"
+#include "activity_handlers.h"
 
 #include "avatar.h"
 #include "cata_utility.h"
@@ -188,14 +190,23 @@ auto zone_destination_accepts( const item &candidate, const tripoint_abs_ms &des
 {
     auto &here = get_map();
     const auto local = abs_to_bub( destination );
-    if( !here.inbounds( local ) || !here.can_put_items_ter_furn( local ) ||
-        static_cast<int>( here.i_at( local ).size() ) >= MAX_ITEM_IN_SQUARE ) {
+    if( !here.inbounds( local ) || !here.can_put_items_ter_furn( local ) ) {
         return false;
     }
     const auto cargo = here.veh_at( local ).part_with_feature( "CARGO", false );
+    const auto count = cargo ? cargo->vehicle().get_items( cargo->part_index() ).size() :
+                       here.i_at( local ).size();
+    const auto limit = cargo ? MAX_ITEM_IN_VEHICLE_STORAGE : MAX_ITEM_IN_SQUARE;
     const auto space = cargo ? cargo->vehicle().free_volume( cargo->part_index() ) : here.free_volume(
                            local );
-    return space >= candidate.volume();
+    if( static_cast<int>( count ) < limit && space >= candidate.volume() ) {
+        return true;
+    }
+    // Keeping an item already stored here does not require additional capacity.
+    const auto is_candidate = [&]( const auto & stored ) { return stored == &candidate; };
+    return cargo ? std::ranges::any_of( cargo->vehicle().get_items( cargo->part_index() ),
+                                        is_candidate ) :
+           std::ranges::any_of( here.i_at( local ), is_candidate );
 }
 
 } // namespace
@@ -1446,13 +1457,6 @@ std::unordered_set<tripoint_abs_ms> zone_manager::get_near( const zone_type_id &
         }
     }
 
-    // Ordinary explicit filters retain precedence over category presets.
-    if( type == zone_LOOT_CUSTOM && it &&
-    std::ranges::any_of( near_point_set, [&]( const auto & point ) {
-    return custom_loot_has( point, it, true ) && zone_destination_accepts( *it, point );
-    } ) ) {
-        std::erase_if( near_point_set, [&]( const auto & point ) { return !custom_loot_has( point, it, true ); } );
-    }
     return near_point_set;
 }
 
@@ -1498,12 +1502,18 @@ std::optional<tripoint_abs_ms> zone_manager::get_nearest( const zone_type_id &ty
 zone_type_id zone_manager::get_near_zone_type_for_item( const item &it,
         const tripoint_abs_ms &where, int range ) const
 {
+    return get_near_zone_type_for_item( it, { .where = where, .range = range } );
+}
+
+auto zone_manager::get_near_zone_type_for_item( const item &it,
+        const zone_destination_query &query ) const -> zone_type_id
+{
     const item_category &cat = it.get_category();
 
     const auto usable = [&]( const zone_type_id & type, const bool regular_only = false ) {
-        for( const auto &dest : get_near( type, where, range, &it ) ) {
+        for( const auto &dest : get_near( type, query.where, query.range, &it ) ) {
             if( ( !regular_only || custom_loot_has( dest, &it, true ) ) &&
-                zone_destination_accepts( it, dest ) ) {
+                zone_destination_accepts( it, dest ) && ( !query.accepts || query.accepts( dest ) ) ) {
                 return true;
             }
         }
@@ -1564,6 +1574,38 @@ zone_type_id zone_manager::get_near_zone_type_for_item( const item &it,
 
 
     return zone_type_id();
+}
+
+auto zone_sorting_destinations( const item &candidate, const player &actor,
+                                const int range ) -> std::unordered_set<tripoint_abs_ms>
+{
+    auto &here = get_map();
+    auto &manager = zone_manager::get_manager();
+    auto reachability = std::unordered_map<tripoint_abs_ms, bool>();
+    const auto reachable = [&]( const tripoint_abs_ms & destination ) {
+        if( const auto found = reachability.find( destination ); found != reachability.end() ) {
+            return found->second;
+        }
+        const auto local = abs_to_bub( destination );
+        const auto accessible = zone_destination_accepts( candidate, destination ) &&
+                                ( ( square_dist( actor.bub_pos(), local ) <= 1 &&
+                                    !here.obstructed_by_vehicle_rotation( actor.bub_pos(), local ) ) ||
+                                  !route_adjacent( actor, local ).empty() );
+        reachability.emplace( destination, accessible );
+        return accessible;
+    };
+    const auto type = manager.get_near_zone_type_for_item( candidate,
+    { .where = actor.abs_pos(), .range = range, .accepts = reachable } );
+    auto destinations = manager.get_near( type, actor.abs_pos(), range, &candidate );
+    std::erase_if( destinations, [&]( const auto & destination ) { return !reachable( destination ); } );
+    if( type == zone_LOOT_CUSTOM && std::ranges::any_of( destinations, [&]( const auto & destination ) {
+    return manager.custom_loot_has( destination, &candidate, true );
+    } ) ) {
+        std::erase_if( destinations, [&]( const auto & destination ) {
+            return !manager.custom_loot_has( destination, &candidate, true );
+        } );
+    }
+    return destinations;
 }
 
 std::vector<zone_data> zone_manager::get_zones( const zone_type_id &type,

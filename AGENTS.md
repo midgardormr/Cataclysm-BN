@@ -176,3 +176,6 @@ rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
 
 - `string_input_popup::edit` preserves the value on Escape but does not report cancellation; retain the popup object and check `confirmed()` before advancing a multi-step creation flow.
 - A zone's mark text may be a filter rather than an item/tile ID; never pass arbitrary zone option text to tile rendering.
+
+- Zone sorting regression tests must exercise ACT_MOVE_LOOT, not only destination classification. Restore the noncopyable zone manager through serialization, and set the test language explicitly for literal name filters.
+- In legacy pathfinding, terrain and furniture are alternative door sources; check each source's opening and inside-only restrictions separately.

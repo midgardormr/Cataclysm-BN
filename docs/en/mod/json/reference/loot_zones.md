@@ -18,12 +18,17 @@ text-only option using the original item filter syntax.
 Custom options save `superzone` (selection mode), `categories` (stable zone IDs),
 and `mark` (optional additional filter, combined with categories using AND).
 Legacy custom zones without category fields keep their text-filter behavior.
-The ordered groups are defined in `loot_zone_presets()` in `clzones.cpp`.
+The ordered groups are loaded from `data/json/loot_zone_groups.json`.
 Unknown storage types are retained as individual entries.
 
 Sorting checks explicit text filters, available specialized zones, category
 storage, then dump zones. Full or blocked specialized storage allows a general
-fallback. Pathfinding and NPC hauling behavior are unchanged.
+fallback. Sorting checks the actor's route to a tile adjacent to the destination,
+using the existing movement restrictions. An unreachable specialized zone or
+manual filter does not suppress an accessible fallback. Cargo uses its own item
+count and volume limits, independently of items on the ground beneath it.
+Overlapping custom zones accept the union of their matching filters; an item at
+a custom source zone is retained only if that zone accepts it.
 
 The details panel shows selected category names directly under "Zone type:".
 Enabled area rules on the same rectangle are listed separately after a blank
