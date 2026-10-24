@@ -9634,6 +9634,8 @@ void game::zones_manager()
             }
         }
         zone_cnt = static_cast<int>( zones.size() );
+        details_zone = nullptr;
+        details_offset = 0;
         return zones;
     };
 
@@ -9673,6 +9675,10 @@ void game::zones_manager()
                 }
                 auto description_index = 0;
                 for( const auto &desc : zone->get_options().get_descriptions() ) {
+                    if( category_storage && description_index > 0 ) {
+                        details_lines.emplace_back();
+                        heading( _( "Filter:" ) );
+                    }
                     const auto lines = wrap_zone_filter( desc.first + desc.second, width - 4 );
                     if( loot && ( !category_storage || description_index > 0 ) ) {
                         for( auto row = details_lines.size(); row < details_lines.size() + lines.size(); ++row ) {
