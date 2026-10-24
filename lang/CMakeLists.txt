@@ -2,25 +2,6 @@ include(GNUInstallDirs)
 
 message(STATUS "Process LANGUAGES variable --\n")
 
-# Keep supplemental zone strings alongside normal catalogues so every packager includes them.
-find_program(ZONE_UI_MSGFMT NAMES msgfmt)
-if (ZONE_UI_MSGFMT)
-    set(ZONE_UI_MO ${CMAKE_SOURCE_DIR}/lang/mo/ru/LC_MESSAGES/zone-ui.mo)
-    add_custom_command(
-        OUTPUT ${ZONE_UI_MO}
-        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_SOURCE_DIR}/lang/mo/ru/LC_MESSAGES
-        COMMAND ${ZONE_UI_MSGFMT} -c -o ${ZONE_UI_MO}
-                ${CMAKE_SOURCE_DIR}/lang/zone_ui/ru.po
-        DEPENDS ${CMAKE_SOURCE_DIR}/lang/zone_ui/ru.po
-        VERBATIM)
-    add_custom_target(zone_ui_translations ALL DEPENDS ${ZONE_UI_MO})
-    if (USE_PREFIX_DATA_DIR)
-        install(FILES ${ZONE_UI_MO} DESTINATION ${CMAKE_INSTALL_LOCALEDIR}/mo/ru/LC_MESSAGES)
-    else ()
-        install(FILES ${ZONE_UI_MO} DESTINATION lang/mo/ru/LC_MESSAGES)
-    endif ()
-endif ()
-
 if (LANGUAGES STREQUAL none)
     message(STATUS "Not compiling any languages.\n")
     return()
