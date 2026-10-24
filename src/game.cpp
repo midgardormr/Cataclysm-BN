@@ -9546,7 +9546,7 @@ void game::zones_manager()
     const auto shortcuts_height = 5;
     auto zone_options_height = 6;
     auto details_lines = std::vector<std::string>();
-    auto details_type_rows = 0;
+    auto details_headings = std::set<int>();
     auto details_offset = 0;
     const zone_data *details_zone = nullptr;
 
@@ -9640,7 +9640,7 @@ void game::zones_manager()
 
     auto refresh_details = [&]() {
         details_lines.clear();
-        details_type_rows = 0;
+        details_headings.clear();
         const auto zone = zone_cnt > 0 ? &zones[active_index].get() : nullptr;
         if( zone != details_zone ) {
             details_offset = 0;
@@ -9651,16 +9651,23 @@ void game::zones_manager()
                 const auto lines = foldstring( text, width - 4 );
                 details_lines.insert( details_lines.end(), lines.begin(), lines.end() );
             };
-            append( _( "Zone type:" ) );
+            const auto heading = [&]( const std::string &text ) {
+                details_headings.insert( details_lines.size() );
+                append( text );
+            };
+            heading( std::ranges::contains( zone_creation_rules(), zone->get_type() ) ?
+                     _( "Zone rules:" ) : _( "Zone type:" ) );
             const auto loot = dynamic_cast<const loot_options *>( &zone->get_options() );
             const auto category_storage = loot && loot->is_superzone();
             if( !category_storage ) {
                 append( mgr.get_name_from_type( zone->get_type() ) );
             }
-            details_type_rows = details_lines.size();
             if( zone->has_options() ) {
                 if( !category_storage ) {
                     details_lines.emplace_back();
+                    if( loot ) {
+                        heading( _( "Filter:" ) );
+                    }
                 }
                 for( const auto &desc : zone->get_options().get_descriptions() ) {
                     const auto lines = wrap_zone_filter( desc.first + desc.second, width - 4 );
@@ -9679,7 +9686,7 @@ void game::zones_manager()
                         std::ranges::contains( rules, other.get_type() ) ) {
                         if( first ) {
                             details_lines.emplace_back();
-                            append( _( "Area rules:" ) );
+                            heading( _( "Area rules:" ) );
                             first = false;
                         }
                         append( mgr.get_name_from_type( other.get_type() ) );
@@ -9706,7 +9713,7 @@ void game::zones_manager()
             if( index >= static_cast<int>( details_lines.size() ) ) {
                 break;
             }
-            mvwprintz( w_zones_options, point( 1, y ), index < details_type_rows ? c_light_gray : c_white,
+            mvwprintz( w_zones_options, point( 1, y ), details_headings.contains( index ) ? c_light_gray : c_white,
                        "%s", details_lines[index] );
         }
         if( overflow ) {
@@ -9874,7 +9881,7 @@ void game::zones_manager()
                     auto options = zone_options::create( id );
                     if( !selection->single_type ) {
                         auto storage = make_shared_fast<loot_options>();
-                        storage->set_preset( { .id = "categories", .title = "", .categories = selection->categories } );
+                        storage->set_preset( { .id = "categories", .categories = selection->categories } );
                         options = storage;
                     } else if( !options->query_at_creation() ) {
                         break;

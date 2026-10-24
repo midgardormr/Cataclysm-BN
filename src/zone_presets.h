@@ -4,12 +4,16 @@
 #include <string>
 #include <vector>
 #include "type_id.h"
+#include "translations.h"
+
+class JsonObject;
 
 struct loot_zone_preset {
     std::string id;
-    std::string title;
+    translation title;
     std::vector<zone_type_id> categories;
-    bool area_rule = false;
+    std::string kind = "storage";
+    int sort_order = 0;
 };
 
 /// Menu templates create ordinary LOOT_CUSTOM zones, not additional zone types.
@@ -28,3 +32,8 @@ auto toggle_zone_categories( std::vector<zone_type_id> &selected,
                              const std::vector<zone_type_id> &members ) -> void;
 auto query_zone_creation( const zone_creation_selection &initial = {},
 bool categories_only = false ) -> std::optional<zone_creation_selection>;
+
+auto load_loot_zone_group( const JsonObject &jo ) -> void;
+auto reset_loot_zone_groups() -> void;
+auto item_category_zone_types() -> std::vector<zone_type_id>;
+auto zone_selection_name( const std::vector<zone_type_id> &categories ) -> std::string;

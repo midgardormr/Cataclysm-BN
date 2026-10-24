@@ -281,17 +281,17 @@ msgctxt "zone name AUTO_DRINK"
 msgid "Auto Drink"
 msgstr "Автоматически пить"
 
-msgid "All tools"
-msgstr "Все инструменты"
+msgid "Tools"
+msgstr "Инструменты"
 
-msgid "All food and drinks"
-msgstr "Вся еда и напитки"
+msgid "Food and drinks"
+msgstr "Еда и напитки"
 
-msgid "All weapons and ammunition"
-msgstr "Всё оружие и боеприпасы"
+msgid "Weapons and ammunition"
+msgstr "Оружие и боеприпасы"
 
-msgid "All materials"
-msgstr "Все материалы"
+msgid "Materials"
+msgstr "Материалы"
 
 msgid "Confirm selection"
 msgstr "Подтвердить выбор"
@@ -379,3 +379,9 @@ msgstr "Правила области"
 
 msgid "Area rules:"
 msgstr "Правила области:"
+
+msgid "Zone rules:"
+msgstr "Правила зоны:"
+
+msgid "Filter:"
+msgstr "Фильтр:"

@@ -1,4 +1,5 @@
 #include "item_category.h"
+#include "zone_presets.h"
 
 #include <set>
 
@@ -90,4 +91,15 @@ std::optional<zone_type_id> item_category::priority_zone( const item &it ) const
 int item_category::sort_rank() const
 {
     return sort_rank_;
+}
+
+auto item_category_zone_types() -> std::vector<zone_type_id>
+{
+    auto result = std::vector<zone_type_id>();
+    for( const auto &category : item_category_factory.get_all() ) {
+        if( const auto id = category.zone(); id && !std::ranges::contains( result, *id ) ) {
+            result.push_back( *id );
+        }
+    }
+    return result;
 }

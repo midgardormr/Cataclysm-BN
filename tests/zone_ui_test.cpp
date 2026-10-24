@@ -204,7 +204,7 @@ TEST_CASE( "zone_creation_checklist_mixes_categories_without_rules_becoming_stor
     CHECK( selected == std::vector<zone_type_id> { zone_type_id( "LOOT_BOOKS" ) } );
     toggle_zone_categories( selected, tools->categories );
     auto options = loot_options();
-    options.set_preset( { .id = "categories", .title = "",
+    options.set_preset( { .id = "categories",
                           .categories = selected } );
     CHECK( options.matches( *item::spawn_temporary( "hammer" ) ) );
     CHECK( options.matches( *item::spawn_temporary( "novel_pulp" ) ) );
@@ -268,4 +268,74 @@ TEST_CASE( "zone_category_continuations_start_at_left_edge", "[zone_ui]" )
     REQUIRE( lines.size() == 2 );
     CHECK( lines[0] == "Инструменты мастерской," );
     CHECK( lines[1] == "Инструменты взлома, Книги" );
+}
+
+TEST_CASE( "zone_group_names_and_suggestions_follow_language", "[zone_ui][i18n]" )
+{
+    auto storage = loot_options();
+    storage.set_preset( { .id = "categories", .categories = { zone_type_id( "LOOT_WORKSHOP_TOOLS" ) } } );
+    {
+        const auto language = override_option( "USE_LANG", "en_US" );
+        set_language();
+        CHECK( storage.get_zone_name_suggestion() == "Tools" );
+        CHECK( zone_selection_name( { zone_type_id( "LOOT_FOOD" ) } ) == "Food and drinks" );
+        CHECK( zone_selection_name( { zone_type_id( "LOOT_BOOKS" ), zone_type_id( "LOOT_TOOLS" ) } ) ==
+               "Tools, Books and maps" );
+    }
+    {
+        const auto language = override_option( "USE_LANG", "ru_RU" );
+        set_language();
+        CHECK( storage.get_zone_name_suggestion() == "Инструменты" );
+        CHECK( zone_selection_name( { zone_type_id( "LOOT_FOOD" ) } ) == "Еда и напитки" );
+        CHECK( zone_selection_name( { zone_type_id( "LOOT_BOOKS" ), zone_type_id( "LOOT_TOOLS" ) } ) ==
+               "Инструменты, Книги и карты" );
+    }
+    set_language();
+}
+
+TEST_CASE( "zone_group_json_extensions_keep_unassigned_categories_available", "[zone_ui][json]" )
+{
+    auto saved = std::ostringstream();
+    auto out = JsonOut( saved );
+    out.start_array();
+    for( const auto &group : loot_zone_presets() ) {
+        out.start_object();
+        out.member( "id", group.id );
+        out.member( "name", std::string( group.title.debug_get_raw() ) );
+        out.member( "kind", group.kind );
+        out.member( "sort_order", group.sort_order );
+        out.member( "categories", group.categories );
+        out.end_object();
+    }
+    out.end_array();
+    const auto restore = on_out_of_scope( [&]() {
+        reset_loot_zone_groups();
+        auto stream = std::istringstream( saved.str() );
+        auto input = JsonIn( stream );
+        for( const auto entry : input.get_array() ) {
+            load_loot_zone_group( entry );
+        }
+    } );
+    const auto load = []( const std::string & text ) {
+        auto stream = std::istringstream( text );
+        auto input = JsonIn( stream );
+        load_loot_zone_group( input.get_object() );
+    };
+    load( R"({"id":"tools","delete":{"categories":["LOOT_TOOLS"]}})" );
+    const auto available = zone_storage_categories();
+    CHECK( std::ranges::contains( available, zone_type_id( "LOOT_TOOLS" ) ) );
+    CHECK( std::ranges::count( available, zone_type_id( "LOOT_TOOLS" ) ) == 1 );
+    load( R"({"id":"tools","extend":{"categories":["LOOT_TOOLS","LOOT_TOOLS"]}})" );
+    const auto tools = std::ranges::find( loot_zone_presets(), "tools", &loot_zone_preset::id );
+    REQUIRE( tools != loot_zone_presets().end() );
+    CHECK( std::ranges::count( tools->categories, zone_type_id( "LOOT_TOOLS" ) ) == 1 );
+    load( R"({"id":"test_mod_group","name":"Mod tools","sort_order":-10,"categories":["LOOT_TOOLS","not_installed"]})" );
+    CHECK( loot_zone_presets().front().id == "test_mod_group" );
+    const auto reordered = zone_storage_categories();
+    CHECK( std::ranges::count( reordered, zone_type_id( "LOOT_TOOLS" ) ) == 1 );
+    CHECK_FALSE( std::ranges::contains( reordered, zone_type_id( "not_installed" ) ) );
+    load( R"({"id":"rules","sort_order":-1000})" );
+    CHECK( loot_zone_presets().back().kind == "rules" );
+    reset_loot_zone_groups();
+    CHECK( zone_creation_rules().empty() );
 }

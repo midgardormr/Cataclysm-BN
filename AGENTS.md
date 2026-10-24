@@ -171,3 +171,5 @@ rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
 - Test profile contents may change between turns; inspect saved zone arrays before indexing them and create standalone fixtures instead of assuming earlier demo zones still exist.
 
 - In the zone sidebar, the list border owns the horizontal divider; the details window starts on the first row of the lower border window, which has no horizontal line at row zero. Count two footer border rows to avoid a blank row above details.
+
+- In multi-file edit scripts, use separate path variables per file and verify header/source boundaries before building; do not reuse a target path after editing another file.

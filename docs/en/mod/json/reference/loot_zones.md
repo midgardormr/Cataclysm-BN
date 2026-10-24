@@ -35,3 +35,54 @@ PgUp/PgDn scroll content that exceeds the available height.
 
 The prototype's Russian catalogue is `lang/zone_ui/ru.po`, compiled to `ru.mo`
 and loaded alongside the base translation catalogue.
+
+## Configuring the creation checklist
+
+`data/json/loot_zone_groups.json` defines `LOOT_ZONE_GROUP` objects:
+
+```json
+{
+  "type": "LOOT_ZONE_GROUP",
+  "id": "tools",
+  "name": "Tools",
+  "kind": "storage",
+  "sort_order": 20,
+  "categories": ["LOOT_WORKSHOP_TOOLS", "LOOT_ENTRY_TOOLS", "LOOT_TOOLS"]
+}
+```
+
+`id` is stable and untranslated. `name` is an English source string (or a normal
+translation object), extracted for translation alongside other JSON names.
+Changing the game language changes group and type labels. Instance names already
+saved by the player remain literal editable names.
+
+`kind` is `storage` (combined category checkbox), `activity` (individual native
+setup), or `rules` (separate native zones on the chosen rectangle). Storage groups
+come first, activity groups next, rules last. Within each section `sort_order`
+controls the order, with `id` as a deterministic tie breaker. Members follow the
+order of `categories`. Duplicate members appear only in their first group;
+references to zone types not installed in the current world are skipped.
+
+Mods can add groups or update an existing group by ID. Omitted fields retain the
+existing values. `categories` replaces membership; `extend`/`delete` update it
+without copying the original definition:
+
+```json
+{
+  "type": "LOOT_ZONE_GROUP",
+  "id": "tools",
+  "extend": { "categories": ["MY_MOD_TOOL_STORAGE"] }
+}
+```
+
+New storage zone types remain selectable even before they are grouped: types
+with a `LOOT_` ID, types referenced by an item category's `zone`, and explicitly
+configured storage members are discovered from the loaded world data. Ungrouped
+storage appears after configured storage groups, sorted by translated name.
+All other native types remain accessible through the standard type picker.
+A new item category still needs its usual zone mapping for category sorting;
+this UI does not invent sorting behavior for categories without a destination.
+
+Suggested names use the selected group names, in checklist order; mixed groups
+are joined with commas. Partial selections still use their parent group name.
+Unknown/unassigned storage types use their translated type name instead.

@@ -200,86 +200,90 @@ auto zone_destination_accepts( const item &candidate, const tripoint_abs_ms &des
 
 } // namespace
 
+namespace
+{
+auto zone_groups = std::vector<loot_zone_preset>();
+}
+
 auto loot_zone_presets() -> const std::vector<loot_zone_preset> & // *NOPAD*
 {
-    const auto ids = []( std::initializer_list<const char *> names ) {
-        auto result = std::vector<zone_type_id>();
-        for( const auto name : names ) {
-            result.emplace_back( name );
+    return zone_groups;
+}
+
+auto reset_loot_zone_groups() -> void
+{
+    zone_groups.clear();
+}
+
+auto load_loot_zone_group( const JsonObject &jo ) -> void
+{
+    const auto id = jo.get_string( "id" );
+    const auto found = std::ranges::find( zone_groups, id, &loot_zone_preset::id );
+    auto group = found == zone_groups.end() ? loot_zone_preset{ .id = id } :
+                 *found;
+    if( found == zone_groups.end() && !jo.has_member( "name" ) ) {
+        jo.throw_error( "A new zone group needs a name", "name" );
+    }
+    jo.read( "name", group.title );
+    jo.read( "kind", group.kind );
+    jo.read( "sort_order", group.sort_order );
+    jo.read( "categories", group.categories );
+    if( group.kind != "storage" && group.kind != "activity" && group.kind != "rules" ) {
+        jo.throw_error( "Expected storage, activity or rules", "kind" );
+    }
+    if( jo.has_object( "extend" ) ) {
+        auto extra = std::vector<zone_type_id>();
+        jo.get_object( "extend" ).read( "categories", extra );
+        for( const auto &entry : extra ) {
+            if( !std::ranges::contains( group.categories, entry ) ) {
+                group.categories.push_back( entry );
+            }
         }
-        return result;
-    };
-    static const auto presets = std::vector<loot_zone_preset> {
-        {
-            "food", translate_marker( "All food and drinks" ),
-            ids( { "LOOT_FOOD", "LOOT_PFOOD", "LOOT_DRINK", "LOOT_PDRINK", "LOOT_COOKING_INGREDIENTS" } )
-        },
-        {
-            "weapons", translate_marker( "All weapons and ammunition" ),
-            ids( { "LOOT_GUNS", "LOOT_WEAPONS", "LOOT_AMMO", "LOOT_MAGAZINES", "LOOT_MODS" } )
-        },
-        {
-            "tools", translate_marker( "All tools" ),
-            ids( { "LOOT_WORKSHOP_TOOLS", "LOOT_ENTRY_TOOLS", "LOOT_COOKING_TOOLS", "LOOT_CHEMISTRY_TOOLS", "LOOT_FARM_TOOLS", "LOOT_TOOLS" } )
-        },
-        {
-            "materials", translate_marker( "All materials" ),
-            ids( { "LOOT_SCRAP_WOOD", "LOOT_SCRAP_METAL", "LOOT_SCRAP_PLASTIC", "LOOT_SCRAP_GLASS", "LOOT_SCRAP_CERAMICS", "LOOT_SCRAP_FABRIC" } )
-        },
-        {
-            "technology", translate_marker( "Technology and spare parts" ),
-            ids( { "LOOT_VEHICLE_PARTS", "LOOT_SPARE_PARTS", "LOOT_BATTERY", "LOOT_ELECTRONICS", "LOOT_SCRAP_ELECTRONICS" } )
-        },
-        {
-            "household", translate_marker( "Household and belongings" ),
-            ids( { "LOOT_CLOTHING", "LOOT_DEPLOYABLES", "LOOT_VALUABLES", "LOOT_CONTAINERS", "LOOT_OTHER" } )
-        },
-        {
-            "medicine", translate_marker( "Medicine and enhancements" ),
-            ids( { "LOOT_DRUGS", "LOOT_BIONICS", "LOOT_MUTAGENS" } )
-        },
-        {
-            "books", translate_marker( "Books and maps" ),
-            ids( { "LOOT_BOOKS", "LOOT_MAP" } )
-        },
-        {
-            "special", translate_marker( "Special items" ),
-            ids( { "LOOT_ARTIFACTS", "LOOT_SPELLBOOKS" } )
-        },
-        {
-            "supplies", translate_marker( "Raw materials and supplies" ),
-            ids( { "LOOT_SOIL", "LOOT_WOOD", "LOOT_ROCKS", "LOOT_SEEDS", "LOOT_CHEMICAL", "LOOT_FUEL" } )
-        },
-        {
-            "remains", translate_marker( "Remains" ),
-            ids( { "LOOT_CORPSE" } )
-        },
-        {
-            "fieldwork", translate_marker( "Field work" ),
-            ids( { "CHOP_TREES", "FARM_PLOT", "MINING", "FISHING_SPOT" } ), true
-        },
-        {
-            "construction", translate_marker( "Construction" ),
-            ids( { "CONSTRUCTION_BLUEPRINT", "CONSTRUCTION_IGNORE" } ), true
-        },
-        {
-            "vehicles", translate_marker( "Vehicles" ),
-            ids( { "VEHICLE_DECONSTRUCT", "VEHICLE_REPAIR", "VEHICLE_PATROL" } ), true
-        },
-        {
-            "sustenance", translate_marker( "Automatic food and fire" ),
-            ids( { "AUTO_EAT", "AUTO_DRINK", "SOURCE_FIREWOOD" } ), true
-        },
-        {
-            "npc", translate_marker( "NPC behavior" ),
-            ids( { "NPC_INVESTIGATE_ONLY", "NPC_NO_INVESTIGATE", "NPC_RETREAT" } ), true
-        },
-        {
-            "rules", translate_marker( "Area rules" ),
-            ids( { "LOOT_UNSORTED", "LOOT_DUMP", "LOOT_IGNORE", "LOOT_IGNORE_FAVORITES", "NO_AUTO_PICKUP", "NO_NPC_PICKUP" } ), true
+    }
+    if( jo.has_object( "delete" ) ) {
+        auto removed = std::vector<zone_type_id>();
+        jo.get_object( "delete" ).read( "categories", removed );
+        std::erase_if( group.categories, [&]( const auto & entry ) {
+            return std::ranges::contains( removed, entry );
+        } );
+    }
+    if( found == zone_groups.end() ) {
+        zone_groups.push_back( group );
+    } else {
+        *found = group;
+    }
+    std::ranges::sort( zone_groups, []( const auto & left, const auto & right ) {
+        const auto rank = []( const auto & kind ) { return kind == "storage" ? 0 : kind == "activity" ? 1 : 2; };
+        if( rank( left.kind ) != rank( right.kind ) ) {
+            return rank( left.kind ) < rank( right.kind );
         }
-    };
-    return presets;
+        return left.sort_order == right.sort_order ? left.id < right.id :
+               left.sort_order < right.sort_order;
+    } );
+}
+
+auto zone_selection_name( const std::vector<zone_type_id> &categories ) -> std::string
+{
+    auto labels = std::vector<std::string>();
+    auto remaining = categories;
+    for( const auto &group : loot_zone_presets() ) {
+        if( group.kind == "storage" && std::ranges::any_of( group.categories, [&]( const auto & id ) {
+        return std::ranges::contains( remaining, id );
+        } ) ) {
+            labels.push_back( group.title.translated() );
+            for( const auto &id : group.categories ) {
+                std::erase( remaining, id );
+            }
+        }
+    }
+    for( const auto &id : remaining ) {
+        labels.push_back( id.is_valid() ? id->name() : id.str() );
+    }
+    auto name = std::string();
+    for( const auto &label : labels ) {
+        name += ( name.empty() ? "" : ", " ) + label;
+    }
+    return name.empty() ? _( "Category storage" ) : name;
 }
 
 auto loot_options::set_preset( const loot_zone_preset &preset ) -> void
@@ -318,22 +322,36 @@ auto loot_options::matches( const item &candidate ) const -> bool
 
 auto zone_creation_rules() -> std::vector<zone_type_id>
 {
-    return loot_zone_presets().back().categories;
+    auto rules = std::vector<zone_type_id>();
+    for( const auto &group : loot_zone_presets() ) {
+        if( group.kind == "rules" ) {
+            for( const auto &id : group.categories ) {
+                if( id.is_valid() && !std::ranges::contains( rules, id ) ) {
+                    rules.push_back( id );
+                }
+            }
+        }
+    }
+    return rules;
 }
 
 auto zone_storage_categories() -> std::vector<zone_type_id>
 {
     const auto rules = zone_creation_rules();
     auto result = std::vector<zone_type_id>();
+    const auto mapped = item_category_zone_types();
     for( const auto &[id, type] : zone_manager::get_manager().get_types() ) {
-        if( id.str().starts_with( "LOOT_" ) && id != zone_LOOT_CUSTOM &&
-            !std::ranges::contains( rules, id ) ) {
+        if( ( id.str().starts_with( "LOOT_" ) || std::ranges::contains( mapped, id ) ||
+        std::ranges::any_of( loot_zone_presets(), [&]( const auto & group ) {
+        return group.kind == "storage" && std::ranges::contains( group.categories, id );
+        } ) ) && id != zone_LOOT_CUSTOM &&
+        !std::ranges::contains( rules, id ) ) {
             result.push_back( id );
         }
     }
     auto ordered = std::vector<zone_type_id>();
     for( const auto &group : loot_zone_presets() ) {
-        if( !group.area_rule ) {
+        if( group.kind == "storage" ) {
             for( const auto &id : group.categories ) {
                 if( std::ranges::contains( result, id ) ) {
                     ordered.push_back( id );
@@ -387,15 +405,16 @@ auto query_zone_creation( const zone_creation_selection &initial,
         }
     };
     for( const auto &preset : loot_zone_presets() ) {
-        if( preset.area_rule ) {
+        if( preset.kind != "storage" ) {
             append_remaining();
         }
-        if( categories_only && preset.area_rule ) {
+        if( categories_only && preset.kind != "storage" ) {
             continue;
         }
         auto members = std::vector<zone_type_id>();
         for( const auto &id : preset.categories ) {
-            if( id.is_valid() && ( preset.area_rule || std::ranges::contains( available, id ) ) ) {
+            if( !std::ranges::contains( grouped, id ) && id.is_valid() && ( preset.kind != "storage" ||
+                    std::ranges::contains( available, id ) ) ) {
                 members.push_back( id );
                 grouped.push_back( id );
             }
@@ -403,18 +422,19 @@ auto query_zone_creation( const zone_creation_selection &initial,
         if( members.empty() ) {
             continue;
         }
-        rows.push_back( { .label = _( preset.title ),
+        rows.push_back( { .label = preset.title.translated(),
                           .description = _( "Toggle the whole group; individual categories can be changed below." ),
-                          .members = preset.area_rule && preset.id != "rules" ? std::vector<zone_type_id>() : members,
-                          .rule = preset.area_rule, .separate = preset.id == "rules" } );
-        if( members.size() == 1 ) {
+                          .members = preset.kind == "activity" ? std::vector<zone_type_id>() : members,
+                          .rule = preset.kind != "storage", .separate = preset.kind == "rules" } );
+        if( members.size() == 1 && preset.kind != "activity" ) {
             continue;
         }
         for( const auto &id : members ) {
-            rows.push_back( { .label = "  " + id->name(), .description = id->desc(), .members = { id }, .rule = preset.area_rule,
-                              .single_type = preset.area_rule && preset.id != "rules" } );
+            rows.push_back( { .label = "  " + id->name(), .description = id->desc(), .members = { id }, .rule = preset.kind != "storage",
+                              .single_type = preset.kind == "activity" } );
         }
     }
+    append_remaining();
     auto selection = initial;
     auto cursor = 0;
     while( true ) {
@@ -900,11 +920,7 @@ bool loot_options::query()
 
 std::string loot_options::get_zone_name_suggestion() const
 {
-    if( superzone == "categories" ) {
-        return _( "Category storage" );
-    }
-    const auto found = std::ranges::find( loot_zone_presets(), superzone, &loot_zone_preset::id );
-    return found == loot_zone_presets().end() ? std::string() : _( found->title );
+    return is_superzone() ? zone_selection_name( categories ) : std::string();
 }
 
 std::vector<std::pair<std::string, std::string>> loot_options::get_descriptions() const
