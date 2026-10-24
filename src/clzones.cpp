@@ -324,7 +324,9 @@ auto loot_options::matches( const item &candidate ) const -> bool
         if( std::ranges::contains( categories, zone_LOOT_CORPSE ) && candidate.is_corpse() ) {
             category = zone_LOOT_CORPSE;
         }
-        if( !std::ranges::contains( categories, category ) ) {
+        const auto priority = cat.priority_zone( candidate );
+        if( !std::ranges::contains( categories, category ) &&
+            ( !priority || !std::ranges::contains( categories, *priority ) ) ) {
             return false;
         }
     }
@@ -456,6 +458,7 @@ auto query_zone_creation( const zone_creation_selection &initial,
     append_remaining();
     auto selection = initial;
     auto cursor = 0;
+    auto filter = std::string();
     while( true ) {
         auto menu = uilist();
         menu.text = _( "Zone Manager" );
@@ -485,9 +488,11 @@ auto query_zone_creation( const zone_creation_selection &initial,
                                 string_format( "[%s] %s", mark, row.label ), row.description );
             menu.entries.back().text_color = row.color;
         }
-        menu.selected = cursor;
+        menu.set_filter( filter );
+        menu.set_selected( cursor );
         menu.query();
         cursor = menu.selected;
+        filter = menu.get_filter();
         if( menu.ret < 0 ) {
             return std::nullopt;
         }
@@ -1596,16 +1601,52 @@ auto zone_sorting_destinations( const item &candidate, const player &actor,
     };
     const auto type = manager.get_near_zone_type_for_item( candidate,
     { .where = actor.abs_pos(), .range = range, .accepts = reachable } );
-    auto destinations = manager.get_near( type, actor.abs_pos(), range, &candidate );
-    std::erase_if( destinations, [&]( const auto & destination ) { return !reachable( destination ); } );
-    if( type == zone_LOOT_CUSTOM && std::ranges::any_of( destinations, [&]( const auto & destination ) {
-    return manager.custom_loot_has( destination, &candidate, true );
-    } ) ) {
-        std::erase_if( destinations, [&]( const auto & destination ) {
-            return !manager.custom_loot_has( destination, &candidate, true );
-        } );
+    const auto destinations = manager.get_near( type, actor.abs_pos(), range, &candidate );
+    auto priorities = std::unordered_map<tripoint_abs_ms, size_t>();
+    if( type == zone_LOOT_CUSTOM ) {
+        for( const auto &reference : manager.get_zones() ) {
+            const auto &zone = reference.get();
+            if( zone.get_type() != type || !zone.get_enabled() || !is_in_current_dimension( zone ) ) {
+                continue;
+            }
+            const auto &options = dynamic_cast<const loot_options &>( zone.get_options() );
+            if( !options.matches( candidate ) ) {
+                continue;
+            }
+            const auto priority = options.is_superzone() ? options.category_count() : size_t( 0 );
+            for( const auto &destination : destinations ) {
+                if( zone.has_inside( destination ) ) {
+                    const auto found = priorities.find( destination );
+                    if( found == priorities.end() || priority < found->second ) {
+                        priorities[destination] = priority;
+                    }
+                }
+            }
+        }
     }
-    return destinations;
+    auto ordered = std::vector<tripoint_abs_ms>( destinations.begin(), destinations.end() );
+    const auto priority = [&]( const auto & point ) {
+        const auto found = priorities.find( point );
+        return found == priorities.end() ? size_t( 0 ) : found->second;
+    };
+    const auto source = candidate.has_position() ? std::optional( candidate.abs_pos() ) : std::nullopt;
+    std::ranges::sort( ordered, [&]( const auto & left, const auto & right ) {
+        if( priority( left ) != priority( right ) ) {
+            return priority( left ) < priority( right );
+        }
+        if( source && ( left == *source || right == *source ) ) {
+            return left == *source && right != *source;
+        }
+        const auto left_distance = square_dist( actor.abs_pos(), left );
+        const auto right_distance = square_dist( actor.abs_pos(), right );
+        return left_distance == right_distance ? left < right : left_distance < right_distance;
+    } );
+    for( const auto &destination : ordered ) {
+        if( reachable( destination ) ) {
+            return { destination };
+        }
+    }
+    return {};
 }
 
 std::vector<zone_data> zone_manager::get_zones( const zone_type_id &type,

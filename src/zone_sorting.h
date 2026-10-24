@@ -13,6 +13,6 @@ struct zone_destination_query {
     std::function < auto( const tripoint_abs_ms & ) -> bool > accepts;
 };
 
-/// Available destinations of the preferred zone type, reachable by the sorting actor.
+/// The best available destination, preferring narrower category selections and preserving sorted items.
 auto zone_sorting_destinations( const item &candidate, const player &actor,
                                 int range ) -> std::unordered_set<tripoint_abs_ms>;

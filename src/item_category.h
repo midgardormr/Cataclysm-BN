@@ -58,6 +58,7 @@ class item_category
         item_category_id get_id() const;
         std::optional<zone_type_id> priority_zone( const item &it ) const;
         std::optional<zone_type_id> zone() const;
+        auto priority_zones() const -> const std::vector<zone_priority_data> & { return zone_priority_; } // *NOPAD*
         int sort_rank() const;
 
         /**

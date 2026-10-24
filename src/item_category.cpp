@@ -100,6 +100,11 @@ auto item_category_zone_types() -> std::vector<zone_type_id>
         if( const auto id = category.zone(); id && !std::ranges::contains( result, *id ) ) {
             result.push_back( *id );
         }
+        for( const auto &priority : category.priority_zones() ) {
+            if( !std::ranges::contains( result, priority.id ) ) {
+                result.push_back( priority.id );
+            }
+        }
     }
     return result;
 }

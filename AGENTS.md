@@ -179,3 +179,6 @@ rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
 
 - Zone sorting regression tests must exercise ACT_MOVE_LOOT, not only destination classification. Restore the noncopyable zone manager through serialization, and set the test language explicitly for literal name filters.
 - In legacy pathfinding, terrain and furniture are alternative door sources; check each source's opening and inside-only restrictions separately.
+
+- Category storage priority tests must create both the narrow and broad zones through LOOT_CUSTOM category selections, not substitute a native specialized type. Include full/unreachable fallback and already-correct source items.
+- Supplemental translation catalogues belong under lang/mo/<locale>/LC_MESSAGES so standard macOS and Android asset packaging includes them; verify both CMake and compile_mo.sh paths.

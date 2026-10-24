@@ -424,19 +424,27 @@ auto map::route(
                     continue;
                 }
 
+                const auto can_open_terrain =
+                    doors && terrain.open && !furniture.has_flag("BLOCKSDOOR")
+                    && (!terrain.has_flag("OPENCLOSE_INSIDE")
+                        || !is_outside(abs_to_map_local(*this, cur)));
+                const auto can_open_furniture =
+                    doors && furniture.open
+                    && (!furniture.has_flag("OPENCLOSE_INSIDE")
+                        || !is_outside(abs_to_map_local(*this, cur)));
+                const auto& opened_terrain = can_open_terrain ? terrain.open.obj() : terrain;
+                const auto& opened_furniture =
+                    can_open_furniture ? furniture.open.obj() : furniture;
+                const auto can_open_passage =
+                    (can_open_terrain || can_open_furniture)
+                    && move_cost_internal(opened_furniture, opened_terrain, veh, part) > 0;
+
                 newg += cost;
                 if (cost == 0) {
                     if (climb_cost > 0 && p_special & PF_CLIMBABLE) {
                         // Climbing fences
                         newg += climb_cost;
-                    } else if (
-                        doors
-                        && ((terrain.open
-                             && (!terrain.has_flag("OPENCLOSE_INSIDE")
-                                 || !is_outside(abs_to_map_local(*this, cur))))
-                            || (furniture.open
-                                && (!furniture.has_flag("OPENCLOSE_INSIDE")
-                                    || !is_outside(abs_to_map_local(*this, cur)))))) {
+                    } else if (can_open_passage) {
                         // Only try to open INSIDE doors from the inside
                         // To open and then move onto the tile
                         newg += 4;

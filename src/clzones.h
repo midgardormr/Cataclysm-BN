@@ -226,6 +226,7 @@ class loot_options : public zone_options
     public:
         auto set_preset( const loot_zone_preset &preset ) -> void;
         auto is_superzone() const -> bool { return !superzone.empty(); }
+        auto category_count() const -> size_t { return categories.size(); }
         auto matches( const item &candidate ) const -> bool;
 
         bool has_options() const override {

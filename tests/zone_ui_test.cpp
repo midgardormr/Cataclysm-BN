@@ -12,6 +12,7 @@
 #include "zone_ui.h"
 #include "zone_presets.h"
 #include "item.h"
+#include "flag.h"
 #include "itype.h"
 #include "relic.h"
 #include "item_category.h"
@@ -756,4 +757,94 @@ TEST_CASE(
     options.serialize(output);
     output.end_object();
     CHECK(saved.str().find("removed_mod_storage") != std::string::npos);
+}
+
+TEST_CASE("narrow_category_storage_precedes_general_storage", "[zone_ui][zone_sorting]") {
+    auto fixture = sorting_fixture();
+    auto& actor = get_avatar();
+    const auto source = actor.abs_pos();
+    auto broad = source + tripoint_rel_ms(2, 0, 0);
+    auto narrow = source + tripoint_rel_ms(0, 2, 0);
+    auto expected = narrow;
+    SECTION("first_placement") {}
+    SECTION("reverse_placement") {
+        std::swap(broad, narrow);
+        expected = narrow;
+    }
+    SECTION("full_narrow_storage_uses_general_storage") {
+        auto rocks = item::spawn("rock");
+        rocks->charges = 1000000;
+        get_map().add_item(abs_to_bub(narrow), std::move(rocks));
+        expected = broad;
+    }
+    SECTION("blocked_narrow_storage_uses_general_storage") {
+        get_map().ter_set(abs_to_bub(narrow), ter_id("t_wall"));
+        expected = broad;
+    }
+    fixture.add(source, zone_type_id("LOOT_UNSORTED"));
+    fixture.custom(
+        narrow, R"({"superzone":"categories","categories":["LOOT_WORKSHOP_TOOLS"],"mark":""})");
+    fixture.custom(
+        broad,
+        R"({"superzone":"categories","categories":["LOOT_WORKSHOP_TOOLS","LOOT_ENTRY_TOOLS","LOOT_COOKING_TOOLS","LOOT_CHEMISTRY_TOOLS","LOOT_FARM_TOOLS","LOOT_TOOLS"],"mark":""})");
+    const auto hammer = item::spawn_temporary("hammer");
+    const auto destinations = zone_sorting_destinations(*hammer, actor, 10);
+    CHECK(destinations.size() == 1);
+    CHECK(destinations.contains(expected));
+    get_map().add_item(abs_to_bub(source), item::spawn("hammer"));
+    fixture.sort();
+    CHECK(std::ranges::any_of(get_map().i_at(abs_to_bub(expected)), [](const auto& it) {
+        return it->typeId() == itype_id("hammer");
+    }));
+}
+
+TEST_CASE("mod_priority_storage_is_discovered_and_matches", "[zone_ui][zone_sorting]") {
+    auto fixture = sorting_fixture();
+    auto zone_stream = std::istringstream(
+        R"({"id":"REVIEW_PRIORITY_STORAGE","name":"Priority storage"})");
+    auto zone_input = JsonIn(zone_stream);
+    zone_type::load_zones(zone_input.get_object(), "review_mod");
+    auto category_stream = std::istringstream(
+        R"({"id":"review_priority_category","name":"Review category","sort_rank":0,"zone":"LOOT_OTHER","priority_zones":[{"id":"REVIEW_PRIORITY_STORAGE","flags":["FIREWOOD"]}]})");
+    auto category_input = JsonIn(category_stream);
+    item_category::load_item_cat(category_input.get_object(), "review_mod");
+    zone_manager::reset_manager();
+    auto type = itype(*item::spawn_temporary("hammer")->type);
+    type.category_force = item_category_id("review_priority_category");
+    auto candidate = item::spawn(&type);
+    candidate->set_flag(flag_id("FIREWOOD"));
+    REQUIRE(candidate->get_category().priority_zone(*candidate)
+            == zone_type_id("REVIEW_PRIORITY_STORAGE"));
+    CHECK(
+        std::ranges::contains(zone_storage_categories(), zone_type_id("REVIEW_PRIORITY_STORAGE")));
+    auto options = loot_options();
+    options.set_preset(
+        {.id = "categories", .categories = {zone_type_id("REVIEW_PRIORITY_STORAGE")}});
+    CHECK(options.matches(*candidate));
+}
+
+TEST_CASE("sorting_cannot_cross_door_blocked_by_furniture", "[zone_ui][zone_sorting]") {
+    auto fixture = sorting_fixture();
+    auto& here = get_map();
+    const auto source = get_avatar().abs_pos();
+    const auto destination = source + tripoint_rel_ms(4, 0, 0);
+    fixture.add(source, zone_type_id("LOOT_UNSORTED"));
+    fixture.add(destination, zone_type_id("LOOT_WORKSHOP_TOOLS"));
+    for (const auto point : here.points_in_radius(abs_to_bub(destination), 2)) {
+        if (square_dist(point, abs_to_bub(destination)) == 2) {
+            here.ter_set(point, ter_id("t_wall"));
+        }
+    }
+    const auto gate = abs_to_bub(destination) + tripoint_rel_ms(-2, 0, 0);
+    here.ter_set(gate, ter_id("t_door_c"));
+    here.furn_set(gate, furn_id("f_bookcase"));
+    const auto hammer = item::spawn_temporary("hammer");
+    CHECK(zone_sorting_destinations(*hammer, get_avatar(), 10).empty());
+    here.add_item(abs_to_bub(source), item::spawn("hammer"));
+    fixture.sort();
+    CHECK(std::ranges::any_of(here.i_at(abs_to_bub(source)), [](const auto& it) {
+        return it->typeId() == itype_id("hammer");
+    }));
+    here.ter_set(gate, ter_id("t_door_o"));
+    REQUIRE(here.impassable(gate));
 }
