@@ -388,3 +388,15 @@ msgstr "Фильтр:"
 
 msgid "Select functions for this area. Entries requiring setup open separately."
 msgstr "Выберите действия для этой области. Зоны с дополнительными настройками открываются отдельно."
+
+msgid "Use zone manager"
+msgstr "Использовать менеджер зон"
+
+msgid "Use category checkboxes when creating zones. If disabled, show the standard zone type list. Existing zones and sorting behavior are unchanged."
+msgstr "Выбирать категории галочками при создании зон. Если выключено, показывается стандартный список типов зон. Существующие зоны и логика сортировки не меняются."
+
+msgid "Toggle checkbox"
+msgstr "Переключить галочку"
+
+msgid "Left/Right: toggle checkbox. Enter: confirm selection."
+msgstr "Влево/вправо: переключить галочку. Enter: подтвердить выбор."

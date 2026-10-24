@@ -28,6 +28,7 @@
 #include "map_iterator.h"
 #include "memory_fast.h"
 #include "output.h"
+#include "options.h"
 #include "player.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
@@ -379,7 +380,7 @@ auto zone_storage_categories() -> std::vector<zone_type_id>
         }
     }
     std::ranges::sort( result, []( const auto & left, const auto & right ) {
-        return localized_compare( left->name(), right->name() );
+        return left.str() < right.str();
     } );
     ordered.insert( ordered.end(), result.begin(), result.end() );
     return ordered;
@@ -403,6 +404,10 @@ auto toggle_zone_categories( std::vector<zone_type_id> &selected,
 auto query_zone_creation( const zone_creation_selection &initial,
                           const bool categories_only ) -> std::optional<zone_creation_selection>
 {
+    if( !categories_only && !get_option<bool>( "USE_ZONE_MANAGER" ) ) {
+        const auto type = zone_manager::get_manager().query_type();
+        return type ? std::optional( zone_creation_selection{ .single_type = type } ) : std::nullopt;
+    }
     struct checklist_row {
         std::string label;
         std::string description;
@@ -463,6 +468,13 @@ auto query_zone_creation( const zone_creation_selection &initial,
         auto menu = uilist();
         menu.text = _( "Zone Manager" );
         menu.desc_enabled = true;
+        menu.allow_additional = true;
+        menu.allow_disabled = true;
+        menu.additional_actions = {
+            { "LEFT", to_translation( "Toggle checkbox" ) },
+            { "RIGHT", to_translation( "Toggle checkbox" ) }
+        };
+        menu.footer_text = _( "Left/Right: toggle checkbox. Enter: confirm selection." );
         menu.addentry_desc( 0, true, MENU_AUTOASSIGN, _( "Confirm selection" ),
                             _( "Selected categories share one storage zone. Area rules are created separately on the same rectangle. Specialized storage takes priority." ) );
         menu.addentry( 1, true, MENU_AUTOASSIGN, _( "Clear selection" ) );
@@ -493,8 +505,21 @@ auto query_zone_creation( const zone_creation_selection &initial,
         menu.query();
         cursor = menu.selected;
         filter = menu.get_filter();
-        if( menu.ret < 0 ) {
+        const auto toggling = menu.ret == UILIST_ADDITIONAL;
+        if( toggling ) {
+            if( cursor < 0 ) {
+                continue;
+            }
+            menu.ret = menu.entries.at( cursor ).retval;
+            if( menu.ret < offset || rows.at( menu.ret - offset ).single_type ||
+                rows.at( menu.ret - offset ).members.empty() ) {
+                continue;
+            }
+        } else if( menu.ret < 0 ) {
             return std::nullopt;
+        } else if( menu.ret_act == "CONFIRM" && menu.ret >= offset &&
+                   !rows.at( menu.ret - offset ).single_type ) {
+            menu.ret = 0;
         }
         if( menu.ret == 0 ) {
             if( !selection.categories.empty() || !selection.rules.empty() ) {

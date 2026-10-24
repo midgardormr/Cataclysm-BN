@@ -99,3 +99,10 @@ is canceled; pending checkboxes are preserved and no name/area dialog opens.
 Recognized filter prefixes (`c:`, `m:`, `q:`, etc.) are highlighted only for display.
 The raw filter remains unchanged. Selected zones use the normal color overlay;
 zone option text is never interpreted as a tile ID.
+
+The Interface option **Use zone manager** is enabled by default. Disabling it
+restores the standard zone-type picker for new zones without changing saved zones
+or sorting behavior. In the checkbox manager, Left and Right both toggle the
+highlighted checkbox; Enter on a category confirms the current selection. Service
+entries and native types requiring setup retain their normal Enter action.
+Unassigned categories use stable zone IDs for ordering, independent of language.

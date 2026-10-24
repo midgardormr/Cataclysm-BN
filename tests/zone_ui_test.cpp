@@ -283,10 +283,16 @@ TEST_CASE( "zone_category_continuations_start_at_left_edge", "[zone_ui]" )
 TEST_CASE( "zone_group_names_and_suggestions_follow_language", "[zone_ui][i18n]" )
 {
     auto storage = loot_options();
+    auto english_order = std::vector<zone_type_id>();
+    auto english_groups = std::vector<std::string>();
     storage.set_preset( { .id = "categories", .categories = { zone_type_id( "LOOT_WORKSHOP_TOOLS" ) } } );
     {
         const auto language = override_option( "USE_LANG", "en_US" );
         set_language();
+        english_order = zone_storage_categories();
+        for( const auto &group : loot_zone_presets() ) {
+            english_groups.push_back( group.id );
+        }
         CHECK( storage.get_zone_name_suggestion() == "Tools" );
         CHECK( zone_selection_name( { zone_type_id( "LOOT_FOOD" ) } ) == "Food and drinks" );
         CHECK( zone_selection_name( { zone_type_id( "LOOT_BOOKS" ), zone_type_id( "LOOT_TOOLS" ) } ) ==
@@ -295,6 +301,12 @@ TEST_CASE( "zone_group_names_and_suggestions_follow_language", "[zone_ui][i18n]"
     {
         const auto language = override_option( "USE_LANG", "ru_RU" );
         set_language();
+        CHECK( zone_storage_categories() == english_order );
+        auto russian_groups = std::vector<std::string>();
+        for( const auto &group : loot_zone_presets() ) {
+            russian_groups.push_back( group.id );
+        }
+        CHECK( russian_groups == english_groups );
         CHECK( storage.get_zone_name_suggestion() == "Инструменты" );
         CHECK( zone_selection_name( { zone_type_id( "LOOT_FOOD" ) } ) == "Еда и напитки" );
         CHECK( zone_selection_name( { zone_type_id( "LOOT_BOOKS" ), zone_type_id( "LOOT_TOOLS" ) } ) ==
@@ -348,6 +360,18 @@ TEST_CASE( "zone_group_json_extensions_keep_unassigned_categories_available", "[
     CHECK( loot_zone_presets().back().kind == "rules" );
     reset_loot_zone_groups();
     CHECK( zone_creation_rules().empty() );
+    auto english_order = std::vector<zone_type_id>();
+    {
+        const auto language = override_option( "USE_LANG", "en_US" );
+        set_language();
+        english_order = zone_storage_categories();
+    }
+    {
+        const auto language = override_option( "USE_LANG", "ru_RU" );
+        set_language();
+        CHECK( zone_storage_categories() == english_order );
+    }
+    set_language();
 }
 
 TEST_CASE( "zone_filter_prefix_highlights_follow_filter_syntax", "[zone_ui]" )

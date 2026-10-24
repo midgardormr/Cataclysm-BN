@@ -182,3 +182,5 @@ rg -C2 -i 'speedway' lang/po/ko.po | rg -v '^(#:|--)' | head -n 20
 
 - Category storage priority tests must create both the narrow and broad zones through LOOT_CUSTOM category selections, not substitute a native specialized type. Include full/unreachable fallback and already-correct source items.
 - Supplemental translation catalogues belong under lang/mo/<locale>/LC_MESSAGES so standard macOS and Android asset packaging includes them; verify both CMake and compile_mo.sh paths.
+
+- Checklist arrow actions can arrive with no selection after an empty search; guard a negative uilist selected index before indexing entries.
