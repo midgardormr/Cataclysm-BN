@@ -50,3 +50,12 @@ else
         msgfmt $MSGFMT_NO_CONVERT -f -o $LOCALE_DIR/${n}/LC_MESSAGES/cataclysm-bn.mo ${f}
     done
 fi
+
+# Supplemental source-controlled UI strings must also reach Android and release assets.
+for f in lang/zone_ui/*.po
+do
+    [ -f "$f" ] || continue
+    n=$(basename "$f" .po)
+    mkdir -p "$LOCALE_DIR/$n/LC_MESSAGES"
+    msgfmt $MSGFMT_NO_CONVERT -c -o "$LOCALE_DIR/$n/LC_MESSAGES/zone-ui.mo" "$f" || exit 1
+done

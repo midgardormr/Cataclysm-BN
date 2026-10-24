@@ -927,6 +927,10 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
                 -p "@executable_path/lib/")
     endif()
 
+    set(CATA_OSX_TRANSLATION_TARGET)
+    if (TARGET translations)
+        set(CATA_OSX_TRANSLATION_TARGET translations)
+    endif ()
     add_custom_target(osx-app
         COMMAND ${CMAKE_COMMAND} -E rm -rf "${CATA_OSX_APP_DIR}"
         COMMAND ${CMAKE_COMMAND} -E make_directory "${CATA_OSX_CONTENTS_DIR}/MacOS"
@@ -951,7 +955,7 @@ if (APPLE AND RELEASE AND (TILES OR CURSES))
         ${CATA_OSX_COPY_RESOURCE_COMMANDS}
         ${CATA_OSX_COPY_FRAMEWORK_COMMANDS}
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-        DEPENDS ${CATA_OSX_GAME_TARGET} translations)
+        DEPENDS ${CATA_OSX_GAME_TARGET} ${CATA_OSX_TRANSLATION_TARGET})
 
     add_custom_target(osx-bundle-runtime
         ${CATA_OSX_BUNDLE_RUNTIME_COMMANDS}
@@ -984,7 +988,7 @@ if (USE_UNITY_BUILD)
 endif ()
 
 if (TARGET zone_ui_translations)
-    foreach (ZONE_UI_TARGET cataclysm-bn-tiles cata_test-tiles)
+    foreach (ZONE_UI_TARGET cataclysm-bn-tiles cata_test-tiles cataclysm-bn cata_test translations)
         if (TARGET ${ZONE_UI_TARGET})
             add_dependencies(${ZONE_UI_TARGET} zone_ui_translations)
         endif ()

@@ -22,7 +22,9 @@ The ordered groups are loaded from `data/json/loot_zone_groups.json`.
 Unknown storage types are retained as individual entries.
 
 Sorting checks explicit text filters, available specialized zones, category
-storage, then dump zones. Full or blocked specialized storage allows a general
+storage, then dump zones. Among category zones, the smaller category selection
+wins; equal selections prefer the current storage location, then the closest
+available tile. Only the first reachable destination is used. Full or blocked specialized storage allows a general
 fallback. Sorting checks the actor's route to a tile adjacent to the destination,
 using the existing movement restrictions. An unreachable specialized zone or
 manual filter does not suppress an accessible fallback. Cargo uses its own item
@@ -38,7 +40,7 @@ fit the panel width. Conditions wider than the entire panel must still wrap.
 Details grow upwards, retaining the bottom shortcuts and at least one list row;
 PgUp/PgDn scroll content that exceeds the available height.
 
-The prototype's Russian catalogue is `lang/zone_ui/ru.po`, compiled to `ru.mo`
+The prototype's Russian catalogue is `lang/zone_ui/ru.po`, compiled to `lang/mo/ru/LC_MESSAGES/zone-ui.mo`
 and loaded alongside the base translation catalogue.
 
 ## Configuring the creation checklist
