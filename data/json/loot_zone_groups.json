@@ -96,7 +96,7 @@
   {
     "type": "LOOT_ZONE_GROUP",
     "id": "remains",
-    "name": "Remains",
+    "name": "Corpses",
     "sort_order": 100,
     "kind": "storage",
     "categories": [ "LOOT_CORPSE" ]

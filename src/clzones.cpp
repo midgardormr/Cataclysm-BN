@@ -443,7 +443,7 @@ auto query_zone_creation( const zone_creation_selection &initial,
                 continue;
             }
             if( !ungrouped ) {
-                rows.push_back( { .label = _( "Other zone types" ) } );
+                rows.push_back( { .label = _( "Other zone types" ), .color = c_light_cyan } );
                 ungrouped = true;
             }
             rows.push_back( { .label = type.name(), .description = type.desc(),
@@ -478,8 +478,8 @@ for( const auto &preset : loot_zone_presets() ) {
                                          _( "Select functions for this area. Entries requiring setup open separately." ),
                           .members = preset.kind == "activity" ? std::vector<zone_type_id>() : members,
                           .rule = preset.kind != "storage",
-                          .color = preset.kind == "rules" ? c_yellow :
-                                   preset.kind == "storage" ? c_light_cyan : c_light_gray } );
+                          .color = preset.id == "remains" ? c_light_gray :
+                                   preset.kind == "rules" ? c_yellow : c_light_cyan } );
         if( members.size() == 1 && preset.kind != "activity" ) {
             continue;
         }
@@ -550,6 +550,7 @@ for( const auto &preset : loot_zone_presets() ) {
                 };
             }
             menu.entries.back().text_color = row.color;
+            menu.entries.back().force_color = true;
         }
         for( auto &entry : menu.entries ) {
             entry.desc += ( entry.desc.empty() ? "" : "\n\n" ) + help;
