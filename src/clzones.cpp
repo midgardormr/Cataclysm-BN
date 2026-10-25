@@ -496,10 +496,9 @@ for( const auto &preset : loot_zone_presets() ) {
     while( true ) {
     auto menu = uilist();
         menu.text = _( "Zone Manager" );
-        menu.w_width_setup = []() {
-            return std::min( get_option<int>( "ZONE_MANAGER_WIDTH" ), std::max( 20, TERMX - 4 ) );
-        };
         menu.desc_enabled = true;
+        // Preserve the legacy description budget plus a blank line and two hint lines.
+        menu.desc_lines_hint += 3;
         menu.allow_additional = true;
         menu.allow_disabled = true;
         menu.additional_actions = {

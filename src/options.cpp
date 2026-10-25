@@ -2044,11 +2044,6 @@ void options_manager::add_options_interface()
          true
        );
 
-    add( "ZONE_MANAGER_WIDTH", interface, translate_marker( "Zone manager width" ),
-         translate_marker( "Width of the zone creation and category selection window in character cells. Limited by the available screen width." ),
-         56, 40, 120
-       );
-
     add( "SIDEBAR_POSITION", interface, translate_marker( "Sidebar position" ),
          translate_marker( "Switch between sidebar on the left or on the right side.  Requires restart." ),
          //~ sidebar position

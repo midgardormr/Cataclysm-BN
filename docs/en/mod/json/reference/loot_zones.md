@@ -111,10 +111,11 @@ Selection markers are gray `−` (unselected), green `+` (selected), and yellow 
 (partially selected group). Descriptions follow the highlighted entry, with current
 key bindings shown underneath after a blank line.
 
-The Interface option **Zone manager width** sets the creation/category checklist width
-in character cells (default 56, range 40–120). The window is capped to the screen width;
-control hints use two lines below the selected entry description. All checklist labels
-share one left alignment, with a single space after their selection marker.
+Window sizing uses the same automatic `uilist` layout as the original zone picker:
+width follows the contents and is capped to the screen; height is capped and the
+list scrolls. Control hints use two lines below the selected entry description.
+All checklist labels share one left alignment, with a single space after their
+selection marker.
 
 Editing an existing zone type also uses the manager when enabled. One existing zone
 can become category storage or one native type; extra area rules must be created
