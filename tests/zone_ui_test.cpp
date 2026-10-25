@@ -237,9 +237,11 @@ TEST_CASE( "zone_groups_follow_document_order_without_duplicate_types", "[zone_u
     REQUIRE( groups.size() == 17 );
     CHECK( groups.front().id == "food" );
     CHECK( groups[4].id == "technology" );
-    CHECK( groups[11].id == "rules" );
-    CHECK( groups[12].id == "fieldwork" );
-    for( const auto &id : groups[11].categories ) {
+    CHECK( groups[13].id == "npc" );
+    CHECK( groups[14].id == "fieldwork" );
+    CHECK( groups[15].id == "construction" );
+    CHECK( groups.back().id == "rules" );
+    for( const auto &id : groups.back().categories ) {
         CHECK( std::ranges::contains( zone_creation_rules(), id ) );
     }
     auto seen = std::vector<zone_type_id>();
@@ -344,7 +346,7 @@ TEST_CASE( "zone_group_json_extensions_keep_unassigned_categories_available", "[
     load( R"({"id":"rules","sort_order":-1000})" );
     const auto rule_group = std::ranges::find( loot_zone_presets(), "rules", &loot_zone_preset::id );
     const auto activity_group = std::ranges::find( loot_zone_presets(), "activity", &loot_zone_preset::kind );
-    CHECK( rule_group < activity_group );
+    CHECK( rule_group > activity_group );
     reset_loot_zone_groups();
     CHECK( zone_creation_rules().empty() );
     auto english_order = std::vector<zone_type_id>();

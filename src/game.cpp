@@ -9897,7 +9897,8 @@ void game::zones_manager()
                     pending.push_back( { .type = id, .name = *name, .options = options } );
                 }
                 auto canceled = false;
-                for( const auto &rule : selection->rules ) {
+                const auto rules = selection->single_type ? std::vector<zone_type_id>() : selection->rules;
+                for( const auto &rule : rules ) {
                     const auto name = mgr.query_name( rule->name() );
                     if( !name ) {
                         canceled = true;
@@ -9968,13 +9969,20 @@ void game::zones_manager()
 
                 uilist as_m;
                 as_m.text = _( "What do you want to change:" );
-                as_m.entries.emplace_back( 1, true, '1', _( "Edit name" ) );
-                as_m.entries.emplace_back( 2, true, '2', _( "Edit type" ) );
-                as_m.entries.emplace_back( 3, zone.get_options().has_options(), '3',
-                                           zone.get_type() == zone_type_id( "LOOT_CUSTOM" ) ? _( "Edit filter" ) : _( "Edit options" ) );
-                as_m.entries.emplace_back( 4, !zone.get_is_vehicle(), '4', _( "Edit position" ) );
+                const auto loot = dynamic_cast<const loot_options *>( &zone.get_options() );
+                const auto manual_filter = loot && !loot->is_superzone();
+                as_m.entries.emplace_back( 1, true, MENU_AUTOASSIGN, _( "Edit name" ) );
+                if( !manual_filter ) {
+                    as_m.entries.emplace_back( 2, true, MENU_AUTOASSIGN, _( "Edit type" ) );
+                }
+                if( manual_filter ) {
+                    as_m.entries.emplace_back( 3, true, MENU_AUTOASSIGN, _( "Edit filter" ) );
+                } else if( !loot && zone.get_options().has_options() ) {
+                    as_m.entries.emplace_back( 3, true, MENU_AUTOASSIGN, _( "Edit options" ) );
+                }
+                as_m.entries.emplace_back( 4, !zone.get_is_vehicle(), MENU_AUTOASSIGN, _( "Edit position" ) );
                 // TODO: Enable moving vzone after vehicle zone can be bigger than 1*1
-                as_m.entries.emplace_back( 5, !zone.get_is_vehicle(), '5', _( "Move position" ) );
+                as_m.entries.emplace_back( 5, !zone.get_is_vehicle(), MENU_AUTOASSIGN, _( "Move position" ) );
                 as_m.query();
 
                 switch( as_m.ret ) {

@@ -266,7 +266,7 @@ auto load_loot_zone_group( const JsonObject &jo ) -> void
         *found = group;
     }
     std::ranges::sort( zone_groups, []( const auto & left, const auto & right ) {
-        const auto rank = []( const auto & kind ) { return kind == "storage" ? 0 : kind == "rules" ? 1 : 2; };
+        const auto rank = []( const auto & kind ) { return kind == "storage" ? 0 : kind == "activity" ? 1 : 2; };
         if( rank( left.kind ) != rank( right.kind ) ) {
             return rank( left.kind ) < rank( right.kind );
         }
@@ -430,8 +430,32 @@ auto query_zone_creation( const zone_creation_selection &initial,
             }
         }
     };
+    const auto append_other_types = [&]() {
+        if( categories_only ) {
+            return;
+        }
+        auto ungrouped = false;
+        for( const auto &[id, type] : zone_manager::get_manager().get_types() ) {
+            const auto configured = std::ranges::any_of( loot_zone_presets(), [&]( const auto & group ) {
+                return std::ranges::contains( group.categories, id );
+            } );
+            if( id == zone_LOOT_CUSTOM || configured || std::ranges::contains( grouped, id ) ) {
+                continue;
+            }
+            if( !ungrouped ) {
+                rows.push_back( { .label = _( "Other zone types" ) } );
+                ungrouped = true;
+            }
+            rows.push_back( { .label = type.name(), .description = type.desc(),
+                              .members = { id }, .single_type = true } );
+            grouped.push_back( id );
+        }
+    };
 for( const auto &preset : loot_zone_presets() ) {
-    if( preset.kind != "storage" ) {
+    if( preset.kind == "rules" ) {
+            append_other_types();
+        }
+        if( preset.kind != "storage" ) {
             append_remaining();
         }
         if( categories_only && preset.kind != "storage" ) {
@@ -454,30 +478,18 @@ for( const auto &preset : loot_zone_presets() ) {
                                          _( "Select functions for this area. Entries requiring setup open separately." ),
                           .members = preset.kind == "activity" ? std::vector<zone_type_id>() : members,
                           .rule = preset.kind != "storage",
-                          .color = preset.kind != "activity" ? c_light_cyan : c_light_gray } );
+                          .color = preset.kind == "rules" ? c_yellow :
+                                   preset.kind == "storage" ? c_light_cyan : c_light_gray } );
         if( members.size() == 1 && preset.kind != "activity" ) {
             continue;
         }
         for( const auto &id : members ) {
-            rows.push_back( { .label = "  " + id->name(), .description = id->desc(), .members = { id }, .rule = preset.kind != "storage",
+            rows.push_back( { .label = id->name(), .description = id->desc(), .members = { id }, .rule = preset.kind != "storage",
                               .single_type = preset.kind != "storage" && !zone_can_share_area( id ) } );
         }
     }
     append_remaining();
-    if( !categories_only ) {
-    auto ungrouped = false;
-    for( const auto &[id, type] : zone_manager::get_manager().get_types() ) {
-            if( id == zone_LOOT_CUSTOM || std::ranges::contains( grouped, id ) ) {
-                continue;
-            }
-            if( !ungrouped ) {
-                rows.push_back( { .label = _( "Other zone types" ) } );
-                ungrouped = true;
-            }
-            rows.push_back( { .label = "  " + type.name(), .description = type.desc(),
-                              .members = { id }, .single_type = true } );
-        }
-    }
+    append_other_types();
     auto selection = initial;
     auto cursor = 0;
     auto filter = std::string();
@@ -511,8 +523,6 @@ for( const auto &preset : loot_zone_presets() ) {
                                          colorize( key_label( "LEFT", KEY_LEFT ), c_light_green ),
                                          colorize( key_label( "RIGHT", KEY_RIGHT ), c_light_green ),
                                          colorize( keys.get_desc( "CONFIRM", 1 ), c_light_green ) );
-        menu.addentry_desc( 0, true, MENU_AUTOASSIGN, _( "Confirm selection" ),
-                            _( "Selected categories share one storage zone. Area rules are created separately on the same rectangle. Specialized storage takes priority." ) );
         menu.addentry( 1, true, MENU_AUTOASSIGN, _( "Clear selection" ) );
         if( !categories_only ) {
             menu.addentry_desc( 2, true, MENU_AUTOASSIGN, _( "Manual text filter..." ),
@@ -521,6 +531,7 @@ for( const auto &preset : loot_zone_presets() ) {
         for( auto &entry : menu.entries ) {
             entry.text_color = c_white;
         }
+        // Zero is reserved for confirmation through Enter, not a visible entry.
         const auto offset = categories_only ? 2 : 3;
         for( auto i = 0; i < static_cast<int>( rows.size() ); ++i ) {
             const auto &row = rows[i];

@@ -63,7 +63,7 @@ Changing the game language changes group and type labels. Instance names already
 saved by the player remain literal editable names.
 
 `kind` is `storage` (combined category checkbox), `activity` (native functions, with individual setup when needed), or `rules` (separate native zones on the chosen rectangle). Storage groups
-come first, followed by rules and then activity groups. Within each section `sort_order`
+come first, followed by activity groups and then area rules. Within each section `sort_order`
 controls the order, with `id` as a deterministic tie breaker. Members follow the
 order of `categories`. Duplicate members appear only in their first group;
 references to zone types not installed in the current world are skipped.
@@ -104,7 +104,7 @@ The Interface option **Use zone manager** is enabled by default. Disabling it
 restores the standard zone-type picker for new zones without changing saved zones
 or sorting behavior. In the checkbox manager, Left and Right both toggle the
 highlighted checkbox; Enter on a category confirms the current selection. Service
-entries and native types requiring setup retain their normal Enter action.
+entries and native types requiring setup retain their normal Enter action. There is no separate confirm row.
 Unassigned categories use stable zone IDs for ordering, independent of language.
 
 Selection markers are gray `−` (unselected), green `+` (selected), and yellow `~`
@@ -113,9 +113,14 @@ key bindings shown underneath after a blank line.
 
 The Interface option **Zone manager width** sets the creation/category checklist width
 in character cells (default 56, range 40–120). The window is capped to the screen width;
-control hints use two lines below the selected entry description.
+control hints use two lines below the selected entry description. All checklist labels
+share one left alignment, with a single space after their selection marker.
 
 Editing an existing zone type also uses the manager when enabled. One existing zone
 can become category storage or one native type; extra area rules must be created
 as separate zones. Its name, bounds, enabled state, faction and vehicle binding
 are retained, and cancellation leaves it unchanged.
+
+The edit menu shows **Edit type** for category/native zones and **Edit filter**
+for manual text filters, without duplicate actions. Native setup dialogs, such as
+farming and construction options, remain available separately.
