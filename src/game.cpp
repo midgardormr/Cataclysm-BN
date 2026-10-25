@@ -186,7 +186,7 @@
 #include "world_type.h"
 #include "worldfactory.h"
 #include "zone_ui.h"
-#include "zone_presets.h"
+#include "zone_groups.h"
 
 #include <algorithm>
 #include <bitset>
@@ -9453,7 +9453,7 @@ auto zones_manager_shortcuts( const catacurses::window &w_info, const bool /*ove
                               const bool /*submap_grid_enabled*/ ) -> void
 {
     werase( w_info );
-    const auto key = []( const std::string & text ) { return shortcut_text( c_light_green, text ); };
+    const auto key = []( const std::string &text ) { return shortcut_text( c_light_green, text ); };
     const auto lines = std::array<std::array<std::string, 2>, 5> {{
             { key( _( "<A>dd" ) ), key( _( "<R>emove" ) ) },
             { key( _( "<E>nable" ) ), key( _( "<D>isable" ) ) },
@@ -9662,7 +9662,7 @@ void game::zones_manager()
             heading( std::ranges::contains( zone_creation_rules(), zone->get_type() ) ?
                      _( "Zone rules:" ) : _( "Zone type:" ) );
             const auto loot = dynamic_cast<const loot_options *>( &zone->get_options() );
-            const auto category_storage = loot && loot->is_superzone();
+            const auto category_storage = loot && loot->uses_categories();
             if( !category_storage ) {
                 append( mgr.get_name_from_type( zone->get_type() ) );
             }
@@ -9703,7 +9703,8 @@ void game::zones_manager()
             if( index >= static_cast<int>( details_lines.size() ) ) {
                 break;
             }
-            mvwprintz( w_zones_options, point( 1, y ), details_headings.contains( index ) ? c_light_gray : c_white,
+            mvwprintz( w_zones_options, point( 1, y ),
+                       details_headings.contains( index ) ? c_light_gray : c_white,
                        "%s", details_lines[index] );
             if( details_filters.contains( index ) ) {
                 for( const auto byte : zone_filter_prefixes( details_lines[index] ) ) {
@@ -9862,26 +9863,26 @@ void game::zones_manager()
     zones_manager_open = true;
     do {
         if( action == "ADD_ZONE" ) {
-            auto previous_selection = zone_creation_selection();
+            auto previous_selection = zone_category_selection();
             while( true ) {
                 const auto selection = query_zone_creation( previous_selection );
                 if( !selection ) {
                     break;
                 }
-                previous_selection = *selection;
-                previous_selection.single_type.reset();
+                const auto single_type = std::get_if<zone_type_id>( &*selection );
+                const auto selected = std::get_if<zone_category_selection>( &*selection );
                 struct pending_zone {
                     zone_type_id type;
                     std::string name;
                     shared_ptr_fast<zone_options> options;
                 };
                 auto pending = std::vector<pending_zone>();
-                if( selection->single_type || !selection->categories.empty() ) {
-                    const auto id = selection->single_type.value_or( zone_type_id( "LOOT_CUSTOM" ) );
+                if( single_type || !selected->categories.empty() ) {
+                    const auto id = single_type ? *single_type : zone_type_id( "LOOT_CUSTOM" );
                     auto options = zone_options::create( id );
-                    if( !selection->single_type ) {
+                    if( !single_type ) {
                         auto storage = make_shared_fast<loot_options>();
-                        storage->set_preset( { .id = "categories", .categories = selection->categories } );
+                        storage->set_categories( selected->categories );
                         options = storage;
                     } else if( !options->query_at_creation() ) {
                         continue;
@@ -9897,7 +9898,7 @@ void game::zones_manager()
                     pending.push_back( { .type = id, .name = *name, .options = options } );
                 }
                 auto canceled = false;
-                const auto rules = selection->single_type ? std::vector<zone_type_id>() : selection->rules;
+                const auto rules = selected ? selected->rules : std::vector<zone_type_id>();
                 for( const auto &rule : rules ) {
                     const auto name = mgr.query_name( rule->name() );
                     if( !name ) {
@@ -9970,7 +9971,7 @@ void game::zones_manager()
                 uilist as_m;
                 as_m.text = _( "What do you want to change:" );
                 const auto loot = dynamic_cast<const loot_options *>( &zone.get_options() );
-                const auto manual_filter = loot && !loot->is_superzone();
+                const auto manual_filter = loot && !loot->uses_categories();
                 as_m.entries.emplace_back( 1, true, MENU_AUTOASSIGN, _( "Edit name" ) );
                 if( !manual_filter ) {
                     as_m.entries.emplace_back( 2, true, MENU_AUTOASSIGN, _( "Edit type" ) );

@@ -15,8 +15,9 @@ on the same rectangle. Native functions can be checked alongside storage where a
 tree cutting, mining, fishing and farming open separately. Each created zone asks for a name. The manual custom filter remains a separate
 text-only option using the original item filter syntax.
 
-Custom options save `superzone` (selection mode), `categories` (stable zone IDs),
-or `mark` (the text filter for manual zones). Category storage cannot add a text filter;
+Custom options save a `categories` array of stable zone IDs for category storage,
+or `mark` for manual text filters. The presence of `categories`, even when empty,
+identifies category storage. Category storage cannot add a text filter;
 editing it opens the category checklist directly.
 Legacy custom zones without category fields keep their text-filter behavior.
 The ordered groups are loaded from `data/json/loot_zone_groups.json`.
@@ -25,10 +26,10 @@ Unknown storage types are retained as individual entries.
 Sorting checks explicit text filters, available specialized zones, category
 storage, then dump zones. Among category zones, the smaller category selection
 wins; equal selections prefer the current storage location, then the closest
-available tile. Only the first reachable destination is used. Full or blocked specialized storage allows a general
-fallback. Sorting checks the actor's route to a tile adjacent to the destination,
-using the existing movement restrictions. An unreachable specialized zone or
-manual filter does not suppress an accessible fallback. Cargo uses its own item
+available tile. Full or blocked specialized storage allows a general fallback.
+The original transfer mechanics are retained: sorting checks the route to the
+source, without adding a route check to the destination. Items beyond an
+inaccessible passage can therefore behave as they did in the original sorter. Cargo uses its own item
 count and volume limits, independently of items on the ground beneath it.
 Overlapping custom zones accept the union of their matching filters; an item at
 a custom source zone is retained only if that zone accepts it.

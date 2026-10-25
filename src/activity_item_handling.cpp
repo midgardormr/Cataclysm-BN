@@ -2624,22 +2624,12 @@ void activity_on_turn_move_loot( player_activity &act, player &p )
                 continue;
             }
 
-            const auto dest_set = zone_sorting_destinations( thisitem, p, ACTIVITY_SEARCH_DISTANCE );
-            // A custom zone at the source is correct only when its filter accepts this item.
-            if( dest_set.contains( src ) ) {
-                continue;
-            }
-
-            for( const auto &dest : dest_set ) {
-                const auto dest_loc = abs_to_bub( dest );
-
-                move_item( p, thisitem, thisitem.count(), src_loc, dest_loc );
-
-                // moved item away from source so decrement
+            const auto destination = zone_sorting_destination( thisitem, abspos, ACTIVITY_SEARCH_DISTANCE );
+            if( destination && *destination != src ) {
+                move_item( p, thisitem, thisitem.count(), src_loc, abs_to_bub( *destination ) );
                 if( num_processed > 0 ) {
                     --num_processed;
                 }
-                break;
             }
             if( p.moves <= 0 ) {
                 return;

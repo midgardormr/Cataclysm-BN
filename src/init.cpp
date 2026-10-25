@@ -15,7 +15,7 @@
 #include "catalua_impl.h"
 #include "clothing_mod.h"
 #include "clzones.h"
-#include "zone_presets.h"
+#include "zone_groups.h"
 #include "construction.h"
 #include "construction_category.h"
 #include "construction_group.h"

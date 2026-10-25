@@ -417,34 +417,23 @@ auto map::route(
                         ? -1
                         : bash_rating_internal(bash, furniture, terrain, false, veh, part);
 
-                if (cost == 0 && rating <= 0 && (!doors || (!terrain.open && !furniture.open))
+                if (cost == 0 && rating <= 0 && (!doors || !terrain.open || !furniture.open)
                     && veh == nullptr && climb_cost <= 0) {
                     layer.state[index] = ASL_CLOSED; // Close it so that next time we won't try to
                                                      // calculate costs
                     continue;
                 }
 
-                const auto can_open_terrain =
-                    doors && terrain.open && !furniture.has_flag("BLOCKSDOOR")
-                    && (!terrain.has_flag("OPENCLOSE_INSIDE")
-                        || !is_outside(abs_to_map_local(*this, cur)));
-                const auto can_open_furniture =
-                    doors && furniture.open
-                    && (!furniture.has_flag("OPENCLOSE_INSIDE")
-                        || !is_outside(abs_to_map_local(*this, cur)));
-                const auto& opened_terrain = can_open_terrain ? terrain.open.obj() : terrain;
-                const auto& opened_furniture =
-                    can_open_furniture ? furniture.open.obj() : furniture;
-                const auto can_open_passage =
-                    (can_open_terrain || can_open_furniture)
-                    && move_cost_internal(opened_furniture, opened_terrain, veh, part) > 0;
-
                 newg += cost;
                 if (cost == 0) {
                     if (climb_cost > 0 && p_special & PF_CLIMBABLE) {
                         // Climbing fences
                         newg += climb_cost;
-                    } else if (can_open_passage) {
+                    } else if (
+                        doors && (terrain.open || furniture.open)
+                        && (!terrain.has_flag("OPENCLOSE_INSIDE")
+                            || !furniture.has_flag("OPENCLOSE_INSIDE")
+                            || !is_outside(abs_to_map_local(*this, cur)))) {
                         // Only try to open INSIDE doors from the inside
                         // To open and then move onto the tile
                         newg += 4;
@@ -488,7 +477,7 @@ auto map::route(
                         newg += 500;
                     } else {
                         // Unbashable and unopenable from here
-                        if (!doors || (!terrain.open && !furniture.open)) {
+                        if (!doors || !terrain.open || !furniture.open) {
                             // Or anywhere else for that matter
                             layer.state[index] = ASL_CLOSED;
                         }

@@ -20,8 +20,6 @@
 #include "type_id.h"
 #include "translations.h"
 
-struct loot_zone_preset;
-struct zone_destination_query;
 class JsonIn;
 class JsonObject;
 class JsonOut;
@@ -211,7 +209,7 @@ class loot_options : public zone_options
     private:
         // Manual text filter; category selections use language-independent zone IDs.
         std::string mark;
-        std::string superzone;
+        bool use_categories = false;
         std::vector<zone_type_id> categories;
         auto query_categories() -> bool;
 
@@ -224,8 +222,8 @@ class loot_options : public zone_options
         query_loot_result query_loot();
 
     public:
-        auto set_preset( const loot_zone_preset &preset ) -> void;
-        auto is_superzone() const -> bool { return !superzone.empty(); }
+        auto set_categories( std::vector<zone_type_id> selected ) -> void;
+        auto uses_categories() const -> bool { return use_categories; }
         auto category_count() const -> size_t { return categories.size(); }
         auto matches( const item &candidate ) const -> bool;
 
@@ -445,8 +443,6 @@ class zone_manager
                 int range = MAX_DISTANCE, const faction_id &fac = your_fac ) const;
         zone_type_id get_near_zone_type_for_item( const item &it, const tripoint_abs_ms &where,
                 int range = MAX_DISTANCE ) const;
-        auto get_near_zone_type_for_item( const item &it,
-                                          const zone_destination_query &query ) const -> zone_type_id;
         std::vector<zone_data> get_zones( const zone_type_id &type, const tripoint_abs_ms &where,
                                           const faction_id &fac = your_fac ) const;
         const zone_data *get_zone_at( const tripoint_abs_ms &where ) const;
