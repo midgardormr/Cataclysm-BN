@@ -849,3 +849,26 @@ TEST_CASE("category_storage_honors_mod_food_mapping", "[zone_ui][zone_sorting]")
     REQUIRE(apple->get_category().get_id() == item_category_id("food"));
     CHECK(options.matches(*apple));
 }
+
+TEST_CASE("confirming_native_storage_keeps_food_fallback", "[zone_ui][zone_sorting]") {
+    auto fixture = sorting_fixture();
+    auto& manager = zone_manager::get_manager();
+    const auto origin = get_avatar().abs_pos();
+    const auto destination = origin + tripoint_rel_ms(2, 0, 0);
+    for (const auto& type : zone_storage_categories()) {
+        CAPTURE(type.str());
+        CHECK(zone_storage_type_after_edit(type, {type}) == type);
+    }
+    for (const auto& type : {zone_type_id("LOOT_FOOD"), zone_type_id("LOOT_DRINK")}) {
+        const auto kept_type = zone_storage_type_after_edit(type, {type});
+        const auto candidate = item::spawn_temporary(
+            type == zone_type_id("LOOT_FOOD") ? "apple" : "milk");
+        fixture.add(destination, kept_type);
+        CHECK(manager.get_near_zone_type_for_item(*candidate, origin, 10) == type);
+    }
+    CHECK(zone_storage_type_after_edit(zone_type_id("LOOT_FOOD"), {zone_type_id("LOOT_BOOKS")})
+          == zone_type_id("LOOT_CUSTOM"));
+    CHECK(zone_storage_type_after_edit(
+              zone_type_id("LOOT_FOOD"), {zone_type_id("LOOT_FOOD"), zone_type_id("LOOT_BOOKS")})
+          == zone_type_id("LOOT_CUSTOM"));
+}

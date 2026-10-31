@@ -1265,6 +1265,12 @@ bool zone_data::set_name()
     return false;
 }
 
+auto zone_storage_type_after_edit( const zone_type_id &current,
+                                   const std::vector<zone_type_id> &selected ) -> zone_type_id
+{
+    return selected.size() == 1 && selected.front() == current ? current : zone_LOOT_CUSTOM;
+}
+
 bool zone_data::set_type()
 {
     const auto storage = dynamic_cast<const loot_options *>( options.get() );
@@ -1305,8 +1311,11 @@ bool zone_data::set_type()
                 continue;
             }
             if( !categories.categories.empty() ) {
+                maybe_type = zone_storage_type_after_edit( type, categories.categories );
+                if( *maybe_type == type ) {
+                    return false;
+                }
                 chosen_categories = categories.categories;
-                maybe_type = zone_LOOT_CUSTOM;
             } else if( !categories.rules.empty() ) {
                 maybe_type = categories.rules.front();
             }

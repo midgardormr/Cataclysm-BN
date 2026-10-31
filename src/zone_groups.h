@@ -26,6 +26,10 @@ struct zone_category_selection {
     std::vector<zone_type_id> rules;
 };
 
+/// Confirming the existing single category retains its native sorting semantics.
+auto zone_storage_type_after_edit( const zone_type_id &current,
+                                   const std::vector<zone_type_id> &selected ) -> zone_type_id;
+
 auto zone_storage_categories() -> std::vector<zone_type_id>;
 auto zone_creation_rules() -> std::vector<zone_type_id>;
 auto toggle_zone_categories( std::vector<zone_type_id> &selected,
