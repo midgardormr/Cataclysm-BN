@@ -44,7 +44,8 @@ auto query_zone_creation( zone_category_selection &selection,
                           bool categories_only = false ) -> std::optional<zone_creation_choice>;
 
 auto load_loot_zone_group( const JsonObject &jo ) -> void;
-auto reset_loot_zone_groups() -> void;
+/// Clear loaded groups, or restore a complete snapshot without losing translation metadata.
+auto reset_loot_zone_groups( std::vector<loot_zone_group> groups = {} ) -> void;
 auto item_category_zone_types() -> std::vector<zone_type_id>;
 auto zone_selection_name( const std::vector<zone_type_id> &categories ) -> std::string;
 

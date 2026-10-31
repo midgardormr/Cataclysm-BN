@@ -223,9 +223,9 @@ auto loot_zone_groups() -> const std::vector<loot_zone_group> & // *NOPAD*
     return zone_groups;
 }
 
-auto reset_loot_zone_groups() -> void
+auto reset_loot_zone_groups( std::vector<loot_zone_group> groups ) -> void
 {
-    zone_groups.clear();
+    zone_groups = std::move( groups );
 }
 
 auto load_loot_zone_group( const JsonObject &jo ) -> void

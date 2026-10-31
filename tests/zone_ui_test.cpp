@@ -277,25 +277,8 @@ TEST_CASE("zone_group_names_and_suggestions_follow_language", "[zone_ui][i18n]")
 }
 
 TEST_CASE("zone_group_json_extensions_keep_unassigned_categories_available", "[zone_ui][json]") {
-    auto saved = std::ostringstream();
-    auto out = JsonOut(saved);
-    out.start_array();
-    for (const auto& group : loot_zone_groups()) {
-        out.start_object();
-        out.member("id", group.id);
-        out.member("name", std::string(group.title.debug_get_raw()));
-        out.member("kind", group.kind);
-        out.member("sort_order", group.sort_order);
-        out.member("categories", group.categories);
-        out.end_object();
-    }
-    out.end_array();
-    const auto restore = on_out_of_scope([&]() {
-        reset_loot_zone_groups();
-        auto stream = std::istringstream(saved.str());
-        auto input = JsonIn(stream);
-        for (const auto entry : input.get_array()) { load_loot_zone_group(entry); }
-    });
+    const auto saved = loot_zone_groups();
+    const auto restore = on_out_of_scope([&]() { reset_loot_zone_groups(saved); });
     const auto load = [](const std::string& text) {
         auto stream = std::istringstream(text);
         auto input = JsonIn(stream);
@@ -985,4 +968,23 @@ TEST_CASE("activity_search_clips_storage_to_radius_and_level", "[zone_ui][zone_s
     CHECK(zone_activity_points(type, origin, -1).empty());
     CHECK(zone_activity_points(type, origin + tripoint_rel_ms(1000, 0, 0), 2).empty());
     CHECK(zone_activity_points(type, origin + tripoint_rel_ms(0, 0, 2), 2).empty());
+}
+
+TEST_CASE("zone_group_snapshot_preserves_translation_context", "[zone_ui][json]") {
+    const auto original = loot_zone_groups();
+    const auto restore = on_out_of_scope([&]() { reset_loot_zone_groups(original); });
+    auto stream = std::istringstream(
+        R"({"id":"test_context_group","name":{"str":"Test group","ctxt":"zone group test"},"categories":["LOOT_BOOKS"]})");
+    auto input = JsonIn(stream);
+    load_loot_zone_group(input.get_object());
+    const auto saved = loot_zone_groups();
+    reset_loot_zone_groups();
+    REQUIRE(loot_zone_groups().empty());
+    reset_loot_zone_groups(saved);
+    const auto found =
+        std::ranges::find(loot_zone_groups(), "test_context_group", &loot_zone_group::id);
+    REQUIRE(found != loot_zone_groups().end());
+    CHECK(found->title == to_translation("zone group test", "Test group"));
+    CHECK(found->title != to_translation("Test group"));
+    CHECK(loot_zone_groups().size() == saved.size());
 }
