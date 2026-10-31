@@ -1,0 +1,31 @@
+name: Zone Manager - Windows baseline comparison
+run-name: Compare Nightly 2026-10-31 with Zone Manager
+on:
+  push:
+    branches: [zone-manager-compare-20261031]
+    paths: [".github/workflows/zone-comparison.yml", ".github/workflows/zone-comparison-build.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  translations:
+    uses: ./.github/workflows/build-translations.yml
+  compare:
+    needs: translations
+    uses: ./.github/workflows/zone-comparison-build.yml
+    with:
+      version-label: zone-manager-comparison
+      mode: release
+      matrix-json: |
+        [
+          { "name": "Clean Nightly Windows x64", "variant": "baseline", "source_ref": "82da098b472e60745ec3c96e5b02ba22e6e5a2ab", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" },
+          { "name": "Zone Manager Windows x64", "variant": "zone-manager", "source_ref": "ac91e93ac8ad6fb5b5beea73aa8ad0113cbe8145", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip" }
+        ]
+      download-translations: true
+      bundle-tilesets: false
+      bundle-registry-mods: false
+      package-artifacts: false
+      run-tests: true
+      upload-artifacts: false
+      upload-to-release: false
