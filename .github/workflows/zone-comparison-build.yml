@@ -870,7 +870,7 @@ jobs:
           $failed = $false
           foreach ($case in $cases) {
             $log = "comparison-$($case.Name).log"
-            & $testBin --min-duration 20 --use-colour no --rng-seed $case.Seed --error-format=github-action "--user-dir=test_user_dir_$($case.Name)" $case.Filter *> $log
+            & $testBin --filenames-as-tags --min-duration 20 --use-colour no --rng-seed $case.Seed --error-format=github-action "--user-dir=test_user_dir_$($case.Name)" $case.Filter *> $log
             $code = $LASTEXITCODE
             Write-Host "Replay $($case.Name): seed $($case.Seed), exit $code"
             Get-Content $log
