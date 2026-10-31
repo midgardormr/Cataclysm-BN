@@ -965,3 +965,24 @@ TEST_CASE("plank_cutting_uses_mixed_category_storage", "[zone_ui][zone_sorting]"
         return entry->typeId() == itype_id("2x4") || entry->typeId() == itype_id("splinter");
     }));
 }
+
+TEST_CASE("activity_search_clips_storage_to_radius_and_level", "[zone_ui][zone_sorting]") {
+    auto fixture = sorting_fixture();
+    auto& manager = zone_manager::get_manager();
+    const auto origin = get_avatar().abs_pos();
+    auto options = make_shared_fast<loot_options>();
+    options->set_categories({zone_type_id("LOOT_SEEDS"), zone_type_id("LOOT_BOOKS")});
+    manager.add("Wide storage", zone_type_id("LOOT_CUSTOM"), your_fac, false, true,
+                origin + tripoint_rel_ms(20, 20, 1), origin - tripoint_rel_ms(20, 20, 1), options);
+    const auto type = zone_type_id("LOOT_SEEDS");
+    const auto points = zone_activity_points(type, origin, 2);
+    REQUIRE(points.size() == 25);
+    for (const auto& point : points) {
+        CHECK(point.z() == origin.z());
+        CHECK(square_dist(point, origin) <= 2);
+    }
+    CHECK(zone_activity_points(type, origin, 0) == std::unordered_set<tripoint_abs_ms>{origin});
+    CHECK(zone_activity_points(type, origin, -1).empty());
+    CHECK(zone_activity_points(type, origin + tripoint_rel_ms(1000, 0, 0), 2).empty());
+    CHECK(zone_activity_points(type, origin + tripoint_rel_ms(0, 0, 2), 2).empty());
+}

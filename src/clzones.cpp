@@ -44,6 +44,7 @@
 #include <algorithm>
 #include <array>
 #include <climits>
+#include <cstdint>
 #include <cmath>
 #include <iosfwd>
 #include <iterator>
@@ -1764,7 +1765,7 @@ auto zone_activity_points( const zone_type_id &type, const tripoint_abs_ms &wher
 {
     auto &manager = zone_manager::get_manager();
     auto result = manager.get_near( type, where, range );
-    if( !is_activity_storage( type ) ) {
+    if( !is_activity_storage( type ) || range < 0 ) {
         return result;
     }
     for( const auto &reference : manager.get_zones() ) {
@@ -1772,9 +1773,26 @@ auto zone_activity_points( const zone_type_id &type, const tripoint_abs_ms &wher
         if( !category_zone_supports_activity( zone, type ) ) {
             continue;
         }
-        for( const auto &point : get_zone_covered_points( zone ) ) {
-            if( point.z() == where.z() && square_dist( point, where ) <= range ) {
-                result.insert( point );
+        const auto bounds = make_zone_bounds( zone.get_start_point(), zone.get_end_point() );
+        if( where.z() < bounds.min.z() || where.z() > bounds.max.z() ) {
+            continue;
+        }
+        // Category storage is rectangular. Intersect it with the search square before enumerating.
+        // Wide intermediates avoid overflow at the coordinate and radius limits.
+        const auto left = std::max<std::int64_t>( bounds.min.x(),
+                          static_cast<std::int64_t>( where.x() ) - range );
+        const auto right = std::min<std::int64_t>( bounds.max.x(),
+                           static_cast<std::int64_t>( where.x() ) + range );
+        const auto top = std::max<std::int64_t>( bounds.min.y(),
+                         static_cast<std::int64_t>( where.y() ) - range );
+        const auto bottom = std::min<std::int64_t>( bounds.max.y(),
+                            static_cast<std::int64_t>( where.y() ) + range );
+        if( left > right || top > bottom ) {
+            continue;
+        }
+        for( const auto x : std::views::iota( left, right + 1 ) ) {
+            for( const auto y : std::views::iota( top, bottom + 1 ) ) {
+                result.emplace( static_cast<int>( x ), static_cast<int>( y ), where.z() );
             }
         }
     }
