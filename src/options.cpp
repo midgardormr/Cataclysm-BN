@@ -2039,6 +2039,11 @@ void options_manager::add_options_interface()
 
     add_empty_line();
 
+    add( "USE_ZONE_MANAGER", interface, translate_marker( "Use zone manager" ),
+         translate_marker( "Use category checkboxes when creating zones. If disabled, show the standard zone type list. Existing zones and sorting behavior are unchanged." ),
+         true
+       );
+
     add( "SIDEBAR_POSITION", interface, translate_marker( "Sidebar position" ),
          translate_marker( "Switch between sidebar on the left or on the right side.  Requires restart." ),
          //~ sidebar position
