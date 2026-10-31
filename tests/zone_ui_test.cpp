@@ -1,5 +1,6 @@
 #include "activity_type.h"
 #include "avatar.h"
+#include "calendar.h"
 #include "cata_utility.h"
 #include "catch/catch.hpp"
 #include "clzones.h"
@@ -871,4 +872,96 @@ TEST_CASE("confirming_native_storage_keeps_food_fallback", "[zone_ui][zone_sorti
     CHECK(zone_storage_type_after_edit(
               zone_type_id("LOOT_FOOD"), {zone_type_id("LOOT_FOOD"), zone_type_id("LOOT_BOOKS")})
           == zone_type_id("LOOT_CUSTOM"));
+}
+
+TEST_CASE(
+    "activity_storage_keeps_native_types_and_mixed_storage_actions", "[zone_ui][zone_sorting]") {
+    auto fixture = sorting_fixture();
+    auto& manager = zone_manager::get_manager();
+    const auto origin = get_avatar().abs_pos();
+    const auto point = origin + tripoint_rel_ms(2, 0, 0);
+    for (const auto& type :
+         {zone_type_id("LOOT_CORPSE"), zone_type_id("LOOT_WOOD"), zone_type_id("LOOT_SEEDS")}) {
+        CAPTURE(type.str());
+        REQUIRE(zone_storage_type({type}) == type);
+        CHECK(zone_storage_type_after_edit(zone_type_id("LOOT_FOOD"), {type}) == type);
+        const auto selected = std::vector<zone_type_id>{type, zone_type_id("LOOT_BOOKS")};
+        REQUIRE(zone_storage_type(selected) == zone_type_id("LOOT_CUSTOM"));
+        auto options = make_shared_fast<loot_options>();
+        options->set_categories(selected);
+        manager.add("Mixed activity storage", zone_type_id("LOOT_CUSTOM"), your_fac, false, true,
+                    point, point, options);
+        REQUIRE(zone_activity_points(type, origin, 60).contains(point));
+        CHECK(zone_activity_at(point, type) != nullptr);
+        // Activity discovery must not promote a general storage zone to a specialized destination.
+        CHECK(manager.get_near(type, origin, 60).empty());
+        CHECK(zone_activity_points(type, origin, 1).empty());
+        auto& zone = manager.get_zones().back().get();
+        zone.set_enabled(false);
+        manager.cache_data();
+        CHECK(zone_activity_points(type, origin, 60).empty());
+        CHECK(zone_activity_at(point, type) == nullptr);
+    }
+}
+
+TEST_CASE("activity_storage_respects_faction_and_manual_filters", "[zone_ui]") {
+    auto fixture = sorting_fixture();
+    auto& manager = zone_manager::get_manager();
+    const auto point = get_avatar().abs_pos();
+    fixture.custom(point, R"({"mark":"log"})");
+    auto options = make_shared_fast<loot_options>();
+    options->set_categories({zone_type_id("LOOT_WOOD")});
+    manager.add("Other faction", zone_type_id("LOOT_CUSTOM"), faction_id("other_faction"), false,
+                true, point, point, options);
+    CHECK(zone_activity_points(zone_type_id("LOOT_WOOD"), point).empty());
+    CHECK(zone_activity_at(point, zone_type_id("LOOT_WOOD")) == nullptr);
+    CHECK(zone_activity_at(point, zone_type_id("LOOT_BOOKS")) == nullptr);
+}
+
+TEST_CASE("vehicle_category_storage_is_visible_to_activities", "[zone_ui][zone_sorting]") {
+    auto fixture = sorting_fixture();
+    auto& here = get_map();
+    auto& manager = zone_manager::get_manager();
+    const auto origin = get_avatar().abs_pos();
+    const auto point = origin + tripoint_rel_ms(3, 0, 0);
+    auto* cart = here.add_vehicle(vproto_id("shopping_cart"), abs_to_bub(point), 0_degrees, 0, 0);
+    REQUIRE(cart);
+    const auto cargo = here.veh_at(abs_to_bub(point)).part_with_feature("CARGO", false);
+    REQUIRE(cargo);
+    auto options = make_shared_fast<loot_options>();
+    options->set_categories({zone_type_id("LOOT_CORPSE"), zone_type_id("LOOT_BOOKS")});
+    auto zone = zone_data(
+        "Mixed cart", zone_type_id("LOOT_CUSTOM"), your_fac, false, true, point, point, options);
+    zone.set_dimension(here.get_bound_dimension());
+    manager.create_vehicle_loot_zone(*cart, cargo->mount(), zone);
+    REQUIRE(zone_activity_points(zone_type_id("LOOT_CORPSE"), origin).contains(point));
+    CHECK(zone_activity_at(point, zone_type_id("LOOT_CORPSE")) != nullptr);
+    here.displace_vehicle(*cart, tripoint_rel_ms(0, 1, 0));
+    manager.cache_vzones();
+    const auto moved = cart->abs_part_location(cargo->part_index());
+    REQUIRE(moved != point);
+    CHECK_FALSE(zone_activity_points(zone_type_id("LOOT_CORPSE"), origin).contains(point));
+    CHECK(zone_activity_points(zone_type_id("LOOT_CORPSE"), origin).contains(moved));
+    CHECK(zone_activity_at(moved, zone_type_id("LOOT_CORPSE")) != nullptr);
+}
+
+TEST_CASE("plank_cutting_uses_mixed_category_storage", "[zone_ui][zone_sorting]") {
+    auto fixture = sorting_fixture();
+    const auto saved_time = calendar::turn;
+    const auto restore_time = on_out_of_scope([&]() { set_time(saved_time); });
+    set_time(calendar::turn_zero + 12_hours);
+    auto& actor = get_avatar();
+    auto& here = get_map();
+    const auto source = actor.abs_pos();
+    fixture.custom(source, R"({"categories":["LOOT_WOOD","LOOT_BOOKS"]})");
+    actor.i_add(item::spawn("hatchet"));
+    here.add_item(abs_to_bub(source), item::spawn("log"));
+    actor.assign_activity(activity_id("ACT_MULTIPLE_CHOP_PLANKS"));
+    process_activity(actor);
+    CHECK(std::ranges::none_of(here.i_at(abs_to_bub(source)), [](const auto& entry) {
+        return entry->typeId() == itype_id("log");
+    }));
+    CHECK(std::ranges::any_of(here.i_at(abs_to_bub(source)), [](const auto& entry) {
+        return entry->typeId() == itype_id("2x4") || entry->typeId() == itype_id("splinter");
+    }));
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <functional>
 #include <map>
@@ -225,6 +226,9 @@ class loot_options : public zone_options
         auto set_categories( std::vector<zone_type_id> selected ) -> void;
         auto uses_categories() const -> bool { return use_categories; }
         auto category_count() const -> size_t { return categories.size(); }
+        auto has_category( const zone_type_id &id ) const -> bool {
+            return uses_categories() && std::ranges::contains( categories, id );
+        }
         auto matches( const item &candidate ) const -> bool;
 
         bool has_options() const override {

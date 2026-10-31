@@ -9878,9 +9878,9 @@ void game::zones_manager()
                 };
                 auto pending = std::vector<pending_zone>();
                 if( single_type || !selected->categories.empty() ) {
-                    const auto id = single_type ? *single_type : zone_type_id( "LOOT_CUSTOM" );
+                    const auto id = single_type ? *single_type : zone_storage_type( selected->categories );
                     auto options = zone_options::create( id );
-                    if( !single_type ) {
+                    if( !single_type && id == zone_type_id( "LOOT_CUSTOM" ) ) {
                         auto storage = make_shared_fast<loot_options>();
                         storage->set_categories( selected->categories );
                         options = storage;

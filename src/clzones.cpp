@@ -971,9 +971,7 @@ plot_options::query_seed_result plot_options::query_seed()
     std::vector<item *> seed_inv = p.items_with( []( const item & itm ) {
         return itm.is_seed();
     } );
-    auto &mgr = zone_manager::get_manager();
-    const std::unordered_set<tripoint_abs_ms> &zone_src_set = mgr.get_near( zone_LOOT_SEEDS,
-        p.abs_pos(), 60 );
+    const auto zone_src_set = zone_activity_points( zone_LOOT_SEEDS, p.abs_pos(), 60 );
     for( const tripoint_abs_ms &elem : zone_src_set ) {
         auto elem_loc = abs_to_bub( elem );
         for( item * const &it : here.i_at( elem_loc ) ) {
@@ -1265,10 +1263,24 @@ bool zone_data::set_name()
     return false;
 }
 
+namespace
+{
+auto is_activity_storage( const zone_type_id &type ) -> bool
+{
+    return type == zone_LOOT_CORPSE || type == zone_LOOT_WOOD || type == zone_LOOT_SEEDS;
+}
+}
+
+auto zone_storage_type( const std::vector<zone_type_id> &selected ) -> zone_type_id
+{
+    return selected.size() == 1 && is_activity_storage( selected.front() ) ?
+           selected.front() : zone_LOOT_CUSTOM;
+}
+
 auto zone_storage_type_after_edit( const zone_type_id &current,
                                    const std::vector<zone_type_id> &selected ) -> zone_type_id
 {
-    return selected.size() == 1 && selected.front() == current ? current : zone_LOOT_CUSTOM;
+    return selected.size() == 1 && selected.front() == current ? current : zone_storage_type( selected );
 }
 
 bool zone_data::set_type()
@@ -1315,7 +1327,9 @@ bool zone_data::set_type()
                 if( *maybe_type == type ) {
                     return false;
                 }
-                chosen_categories = categories.categories;
+                if( *maybe_type == zone_LOOT_CUSTOM ) {
+                    chosen_categories = categories.categories;
+                }
             } else if( !categories.rules.empty() ) {
                 maybe_type = categories.rules.front();
             }
@@ -1731,6 +1745,58 @@ zone_type_id zone_manager::get_near_zone_type_for_item( const item &it,
 
 
     return zone_type_id();
+}
+
+namespace
+{
+auto category_zone_supports_activity( const zone_data &zone, const zone_type_id &type ) -> bool
+{
+    if( !zone.get_enabled() || zone.get_type() != zone_LOOT_CUSTOM ) {
+        return false;
+    }
+    const auto &options = dynamic_cast<const loot_options &>( zone.get_options() );
+    return options.has_category( type );
+}
+}
+
+auto zone_activity_points( const zone_type_id &type, const tripoint_abs_ms &where,
+                           const int range ) -> std::unordered_set<tripoint_abs_ms>
+{
+    auto &manager = zone_manager::get_manager();
+    auto result = manager.get_near( type, where, range );
+    if( !is_activity_storage( type ) ) {
+        return result;
+    }
+    for( const auto &reference : manager.get_zones() ) {
+        const auto &zone = reference.get();
+        if( !category_zone_supports_activity( zone, type ) ) {
+            continue;
+        }
+        for( const auto &point : get_zone_covered_points( zone ) ) {
+            if( point.z() == where.z() && square_dist( point, where ) <= range ) {
+                result.insert( point );
+            }
+        }
+    }
+    return result;
+}
+
+auto zone_activity_at( const tripoint_abs_ms &where, const zone_type_id &type )
+-> const zone_data * // *NOPAD*
+{
+    auto &manager = zone_manager::get_manager();
+    if( const auto native = manager.get_zone_at( where, type ) ) {
+        return native;
+    }
+    if( is_activity_storage( type ) ) {
+        for( const auto &reference : manager.get_zones() ) {
+            const auto &zone = reference.get();
+            if( category_zone_supports_activity( zone, type ) && zone.has_inside( where ) ) {
+                return &zone;
+            }
+        }
+    }
+    return nullptr;
 }
 
 auto zone_sorting_destination( const item &candidate, const tripoint_abs_ms &where,

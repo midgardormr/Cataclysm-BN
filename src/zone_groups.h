@@ -26,6 +26,9 @@ struct zone_category_selection {
     std::vector<zone_type_id> rules;
 };
 
+/// Preserve native types used by butchery, plank cutting and seed selection.
+auto zone_storage_type( const std::vector<zone_type_id> &selected ) -> zone_type_id;
+
 /// Confirming the existing single category retains its native sorting semantics.
 auto zone_storage_type_after_edit( const zone_type_id &current,
                                    const std::vector<zone_type_id> &selected ) -> zone_type_id;

@@ -20,6 +20,11 @@ or `mark` for manual text filters. The presence of `categories`, even when empty
 identifies category storage. Category storage cannot add a text filter;
 editing it opens the category checklist directly.
 Legacy custom zones without category fields keep their text-filter behavior.
+Selecting only Corpses, Wood or Seeds creates the corresponding native zone type.
+Mixed category storage remains one custom zone. Butchery, dissection, plank
+cutting and seed selection also discover the corresponding categories in mixed
+storage; this activity lookup does not change storage sorting priorities.
+
 The ordered groups are loaded from `data/json/loot_zone_groups.json`.
 Unknown storage types are retained as individual entries.
 

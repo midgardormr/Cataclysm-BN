@@ -2841,7 +2841,7 @@ static std::unordered_set<tripoint_abs_ms> generic_multi_activity_locations( pla
         }
     } else if( act_id != ACT_FETCH_REQUIRED ) {
         zone_type_id zone_type = get_zone_for_act( tripoint_bub_ms::zero(), mgr, act_id );
-        src_set = mgr.get_near( zone_type_id( zone_type ), abspos, ACTIVITY_SEARCH_DISTANCE );
+        src_set = zone_activity_points( zone_type, abspos, ACTIVITY_SEARCH_DISTANCE );
         // multiple construction will form a list of targets based on blueprint zones and unfinished constructions
         if( act_id == ACT_MULTIPLE_CONSTRUCTION ) {
             static const zone_type_id zone_type_CONSTRUCTION_IGNORE( "CONSTRUCTION_IGNORE" );
@@ -2965,7 +2965,7 @@ static requirement_check_result generic_multi_activity_check_requirement( player
 
     bool &can_do_it = act_info.can_do;
     const do_activity_reason &reason = act_info.reason;
-    const zone_data *zone = mgr.get_zone_at( src_abs, get_zone_for_act( src_loc, mgr, act_id ) );
+    const zone_data *zone = zone_activity_at( src_abs, get_zone_for_act( src_loc, mgr, act_id ) );
 
     const bool needs_to_be_in_zone = act_id == ACT_FETCH_REQUIRED ||
                                      act_id == ACT_MULTIPLE_FARM ||
@@ -3286,7 +3286,7 @@ static bool generic_multi_activity_do( player &p, const activity_id &act_id,
     zone_manager &mgr = zone_manager::get_manager();
 
     const do_activity_reason &reason = act_info.reason;
-    const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr, act_id ) );
+    const zone_data *zone = zone_activity_at( src, get_zone_for_act( src_loc, mgr, act_id ) );
     map &here = get_map();
     // something needs to be done, now we are there.
     // it was here earlier, in the space of one turn, maybe it got harvested by someone else.
@@ -3437,8 +3437,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
             }
             const auto route = route_adjacent( p, src_loc );
             if( route.empty() ) {
-                const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
-                                        activity_to_restore ) );
+                const zone_data *zone = zone_activity_at( src, get_zone_for_act( src_loc, mgr, activity_to_restore ) );
                 // can't get there, can't do anything, skip it
                 if( is_multi_construction ) {
                     set_activity_failure_message( p,
@@ -3473,8 +3472,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
 
         if( square_dist( p.bub_pos(), src_loc ) > 1 ) {
             auto route = route_adjacent( p, src_loc );
-            const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
-                                    activity_to_restore ) );
+            const zone_data *zone = zone_activity_at( src, get_zone_for_act( src_loc, mgr, activity_to_restore ) );
 
             // check if we found path to source / adjacent tile
             if( route.empty() ) {
@@ -3518,8 +3516,7 @@ bool generic_multi_activity_handler( player_activity &act, player &p, bool check
             activity_to_restore != ACT_MOVE_LOOT &&
             activity_to_restore != ACT_FETCH_REQUIRED &&
             !character_funcs::can_see_fine_details( p ) ) {
-            const zone_data *zone = mgr.get_zone_at( src, get_zone_for_act( src_loc, mgr,
-                                    activity_to_restore ) );
+            const zone_data *zone = zone_activity_at( src, get_zone_for_act( src_loc, mgr, activity_to_restore ) );
             p.add_msg_if_player( m_info, _( "It is too dark to work here." ) );
             if( is_multi_construction ) {
                 set_activity_failure_message( p,
