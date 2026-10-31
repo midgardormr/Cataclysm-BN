@@ -1,0 +1,39 @@
+name: Zone Manager - Windows preview
+run-name: Zone Manager Windows - ${{ github.sha }}
+
+on:
+  push:
+    branches: [zone-manager-windows-20261031]
+    paths-ignore: ["**.md", "**.txt"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: zone-manager-windows-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  translations:
+    uses: ./.github/workflows/build-translations.yml
+
+  windows:
+    needs: translations
+    uses: ./.github/workflows/build.yml
+    with:
+      version-label: zone-manager-nightly-2026-10-31
+      artifact-label: zone-manager-${{ github.run_number }}
+      mode: release
+      matrix-json: |
+        [
+          { "name": "Zone Manager Windows x64", "platform": "windows", "artifact": "windows-tiles-x64-msvc", "os": "windows-2022", "arch": "x64", "tiles": true, "sound": true, "ext": "zip", "content-type": "application/zip", "upload-artifact": true }
+        ]
+      download-translations: true
+      bundle-tilesets: true
+      bundle-registry-mods: false
+      package-artifacts: true
+      run-tests: true
+      upload-artifacts: true
+      upload-to-release: false
