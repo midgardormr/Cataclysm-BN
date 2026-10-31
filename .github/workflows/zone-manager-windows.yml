@@ -1,5 +1,5 @@
 name: Zone Manager - Windows preview
-run-name: Zone Manager Windows - ${{ github.sha }}
+run-name: Zone Manager Windows - Nightly 2026-10-31 - ${{ github.sha }}
 
 on:
   push:
