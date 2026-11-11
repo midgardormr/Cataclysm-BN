@@ -1131,6 +1131,9 @@ def extract_json(state, item):
     if object_type == "MOD_INFO" and not state.project_name:
         state.project_name = item.get("id")
     wrote = False
+    if object_type == "overmap_terrain" and isinstance(item.get("map_label"), str):
+        writestr(state, item["map_label"], comment="Static label on the overmap.")
+        wrote = True
     name = item.get("name") # Used in gettext comments below.
     # Don't extract any record with name = "none".
     if name and name == "none":
